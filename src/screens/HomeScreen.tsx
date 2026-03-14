@@ -1,22 +1,18 @@
 import { useMemo, useRef, useState } from 'react';
-import {
-  Animated,
-  Dimensions,
-  Image,
-  PanResponder,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Animated, Dimensions, Image, PanResponder, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import { Button } from '../components/Button';
+import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { Tag } from '../components/Tag';
 import { mockPlaces } from '../data/mockPlaces';
 import type { RootStackParamList } from '../navigation/types';
 import { useSavedPlaces } from '../store/SavedPlacesContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
+import { typography } from '../theme/typography';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -44,9 +40,7 @@ export function HomeScreen({ navigation }: Props) {
   };
 
   const advanceCard = (direction: 'left' | 'right') => {
-    const shouldSave = direction === 'right' && currentPlace;
-
-    if (shouldSave) {
+    if (direction === 'right' && currentPlace) {
       savePlace(currentPlace.id);
     }
 
@@ -100,13 +94,7 @@ export function HomeScreen({ navigation }: Props) {
 
   const rotate = pan.x.interpolate({
     inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
-    outputRange: ['-10deg', '0deg', '10deg'],
-    extrapolate: 'clamp',
-  });
-
-  const cardOpacity = pan.x.interpolate({
-    inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
-    outputRange: [0.9, 1, 0.9],
+    outputRange: ['-8deg', '0deg', '8deg'],
     extrapolate: 'clamp',
   });
 
@@ -114,62 +102,56 @@ export function HomeScreen({ navigation }: Props) {
     return (
       <Screen>
         <View style={styles.container}>
-          <View style={styles.topRow}>
-            <View>
-              <Text style={styles.eyebrow}>CityTalk</Text>
-              <Text style={styles.title}>You made it through the full stack</Text>
-              <Text style={styles.subtitle}>
-                Saved your favorites? Jump into the list or start the deck over for another pass.
-              </Text>
-            </View>
-          </View>
+          <ScreenHeader
+            eyebrow="CityTalk"
+            title="Deck complete"
+            description="You made it through the full set. Restart the deck or jump into your saved places."
+          />
 
-          <View style={styles.emptyStateCard}>
-            <Text style={styles.emptyStateTitle}>All places reviewed</Text>
-            <Text style={styles.emptyStateText}>
-              You swiped through {mockPlaces.length} places. Restart the deck or open your saved
-              list.
+          <Card>
+            <Text style={styles.emptyTitle}>All places reviewed</Text>
+            <Text style={styles.emptyText}>
+              You swiped through {mockPlaces.length} places in this session.
             </Text>
-
             <View style={styles.actionRow}>
-              <Pressable style={styles.primaryButton} onPress={() => setCurrentIndex(0)}>
-                <Text style={styles.primaryButtonText}>Restart deck</Text>
-              </Pressable>
-              <Pressable
-                style={styles.secondaryButton}
+              <Button
+                variant="primary"
+                style={styles.flexButton}
+                onPress={() => setCurrentIndex(0)}
+              >
+                Restart deck
+              </Button>
+              <Button
+                variant="secondary"
+                style={styles.flexButton}
                 onPress={() => navigation.navigate('SavedPlaces')}
               >
-                <Text style={styles.secondaryButtonText}>Saved places</Text>
-              </Pressable>
+                Saved places
+              </Button>
             </View>
-          </View>
+          </Card>
         </View>
       </Screen>
     );
   }
 
-  const nextPlace = mockPlaces[currentIndex + 1];
-
   return (
     <Screen>
       <View style={styles.container}>
-        <View style={styles.topRow}>
-          <View style={styles.topCopy}>
-            <Text style={styles.eyebrow}>CityTalk</Text>
-            <Text style={styles.title}>Swipe through places worth talking about</Text>
-            <Text style={styles.subtitle}>
-              Left to skip. Right to save. Tap through when something feels like your kind of spot.
-            </Text>
+        <View style={styles.headerRow}>
+          <View style={styles.headerCopy}>
+            <ScreenHeader
+              eyebrow="CityTalk"
+              title="Discover places one card at a time"
+              description="A minimal swipe deck with a travel-editorial feel: skip left, save right, open details when a place catches you."
+            />
           </View>
-          <Pressable
-            style={styles.savedShortcut}
-            onPress={() => navigation.navigate('SavedPlaces')}
-          >
-            <Text style={styles.savedShortcutLabel}>Saved</Text>
-          </Pressable>
+          <Button variant="secondary" onPress={() => navigation.navigate('SavedPlaces')}>
+            Saved
+          </Button>
         </View>
 
-        <View style={styles.progressCard}>
+        <Card style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <Text style={styles.progressLabel}>Deck progress</Text>
             <Text style={styles.progressValue}>
@@ -184,85 +166,60 @@ export function HomeScreen({ navigation }: Props) {
               ]}
             />
           </View>
-        </View>
+        </Card>
 
         <View style={styles.deckArea}>
-          {nextPlace ? (
-            <View style={styles.backCard}>
-              <Image source={{ uri: nextPlace.imageUrl }} style={styles.backCardImage} />
-              <View style={styles.backCardOverlay} />
-              <View style={styles.backCardFooter}>
-                <Text style={styles.backCardTitle}>{nextPlace.name}</Text>
-                <Text style={styles.backCardHint}>Up next</Text>
-              </View>
-            </View>
-          ) : null}
-
           <Animated.View
             style={[
-              styles.card,
+              styles.swipeCard,
               {
                 transform: [...pan.getTranslateTransform(), { rotate }],
-                opacity: cardOpacity,
               },
             ]}
             {...panResponder.panHandlers}
           >
-            <Image source={{ uri: currentPlace.imageUrl }} style={styles.image} />
+            <Image source={{ uri: currentPlace.imageUrl }} style={styles.heroImage} />
             <View style={styles.imageOverlay} />
 
-            <View
-              style={[
-                styles.feedbackPill,
-                feedback === 'save' ? styles.feedbackSave : styles.feedbackSkip,
-                feedback ? styles.feedbackVisible : styles.feedbackHidden,
-              ]}
-            >
-              <Text style={styles.feedbackText}>{feedback === 'save' ? 'SAVE' : 'SKIP'}</Text>
-            </View>
+            {feedback ? (
+              <View
+                style={[
+                  styles.feedbackPill,
+                  feedback === 'save' ? styles.feedbackSave : styles.feedbackSkip,
+                ]}
+              >
+                <Text style={styles.feedbackText}>{feedback === 'save' ? 'SAVE' : 'SKIP'}</Text>
+              </View>
+            ) : null}
 
-            <View style={styles.cardBody}>
-              <View style={styles.metaRow}>
-                <View style={styles.categoryPill}>
-                  <Text style={styles.categoryText}>{currentPlace.category}</Text>
-                </View>
-                {isSaved(currentPlace.id) ? (
-                  <View style={styles.savedPill}>
-                    <Text style={styles.savedPillText}>Saved</Text>
-                  </View>
-                ) : null}
+            <View style={styles.cardContent}>
+              <View style={styles.topMetaRow}>
+                <Tag label={currentPlace.category} tone="primary" />
+                {isSaved(currentPlace.id) ? <Tag label="saved" /> : null}
               </View>
 
               <Text style={styles.placeTitle}>{currentPlace.name}</Text>
               <Text style={styles.placeReview}>{currentPlace.shortReview}</Text>
 
-              <View style={styles.tagsWrap}>
+              <View style={styles.tagsRow}>
                 {currentPlace.tags.map((tag) => (
-                  <View key={tag} style={styles.tagPill}>
-                    <Text style={styles.tagText}>#{tag}</Text>
-                  </View>
+                  <Tag key={tag} label={`#${tag}`} />
                 ))}
               </View>
 
-              <View style={styles.actionRow}>
-                <Pressable
-                  style={styles.detailButton}
-                  onPress={() =>
-                    navigation.navigate('PlaceDetail', {
-                      placeId: currentPlace.id,
-                    })
-                  }
-                >
-                  <Text style={styles.detailButtonText}>Open details</Text>
-                </Pressable>
-              </View>
+              <Button
+                variant="secondary"
+                onPress={() => navigation.navigate('PlaceDetail', { placeId: currentPlace.id })}
+              >
+                Open details
+              </Button>
             </View>
           </Animated.View>
         </View>
 
-        <View style={styles.swipeHintRow}>
-          <Text style={styles.swipeHint}>← Skip</Text>
-          <Text style={styles.swipeHint}>Save →</Text>
+        <View style={styles.hintRow}>
+          <Text style={styles.hintText}>← Skip</Text>
+          <Text style={styles.hintText}>Save →</Text>
         </View>
       </View>
     </Screen>
@@ -274,52 +231,16 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing.md,
   },
-  topRow: {
+  headerRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',
     gap: spacing.md,
     justifyContent: 'space-between',
   },
-  topCopy: {
+  headerCopy: {
     flex: 1,
-    gap: spacing.xs,
-  },
-  eyebrow: {
-    color: colors.primary,
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  title: {
-    color: colors.text,
-    fontSize: 30,
-    fontWeight: '800',
-    lineHeight: 34,
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  savedShortcut: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  savedShortcutLabel: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '700',
   },
   progressCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
     gap: spacing.sm,
     padding: spacing.md,
   },
@@ -330,16 +251,16 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     color: colors.textMuted,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: typography.sizes.bodySm,
+    fontWeight: typography.weights.semibold,
   },
   progressValue: {
     color: colors.text,
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: typography.sizes.bodySm,
+    fontWeight: typography.weights.bold,
   },
   progressTrack: {
-    backgroundColor: '#E6F4F1',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 999,
     height: 8,
     overflow: 'hidden',
@@ -350,237 +271,105 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   deckArea: {
-    alignItems: 'center',
     flex: 1,
-    justifyContent: 'center',
-    minHeight: 540,
+    minHeight: 560,
   },
-  backCard: {
+  swipeCard: {
     backgroundColor: colors.surface,
-    borderRadius: 30,
-    bottom: 12,
-    elevation: 4,
-    height: '92%',
-    left: 12,
+    borderColor: colors.border,
+    borderRadius: 28,
+    borderWidth: 1,
+    flex: 1,
     overflow: 'hidden',
-    position: 'absolute',
-    right: 12,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-  },
-  backCardImage: {
-    height: '100%',
-    width: '100%',
-  },
-  backCardOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(17, 24, 39, 0.28)',
-  },
-  backCardFooter: {
-    bottom: spacing.lg,
-    left: spacing.lg,
-    position: 'absolute',
-    right: spacing.lg,
-  },
-  backCardTitle: {
-    color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '700',
-  },
-  backCardHint: {
-    color: 'rgba(255,255,255,0.88)',
-    fontSize: 14,
-    marginTop: 4,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 30,
-    elevation: 10,
-    height: '96%',
-    overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: '#2C221B',
     shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.14,
+    shadowOpacity: 0.08,
     shadowRadius: 28,
-    width: '100%',
+    elevation: 5,
   },
-  image: {
+  heroImage: {
     height: '100%',
+    position: 'absolute',
     width: '100%',
   },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.26)',
+    backgroundColor: colors.overlay,
   },
   feedbackPill: {
     borderRadius: 999,
-    borderWidth: 2,
     left: spacing.lg,
     paddingHorizontal: 14,
     paddingVertical: 8,
     position: 'absolute',
     top: spacing.lg,
-    transform: [{ rotate: '-10deg' }],
-  },
-  feedbackVisible: {
-    opacity: 1,
-  },
-  feedbackHidden: {
-    opacity: 0,
+    transform: [{ rotate: '-8deg' }],
   },
   feedbackSave: {
-    backgroundColor: 'rgba(15, 118, 110, 0.18)',
-    borderColor: '#5EEAD4',
+    backgroundColor: colors.secondarySoft,
   },
   feedbackSkip: {
-    backgroundColor: 'rgba(244, 63, 94, 0.15)',
-    borderColor: '#FDA4AF',
+    backgroundColor: colors.primarySoft,
   },
   feedbackText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: 2,
+    color: colors.text,
+    fontSize: typography.sizes.bodySm,
+    fontWeight: typography.weights.heavy,
+    letterSpacing: 1.2,
   },
-  cardBody: {
-    bottom: 0,
-    gap: spacing.md,
-    left: 0,
+  cardContent: {
+    flex: 1,
+    justifyContent: 'flex-end',
     padding: spacing.lg,
-    position: 'absolute',
-    right: 0,
+    gap: spacing.md,
   },
-  metaRow: {
+  topMetaRow: {
     alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  categoryPill: {
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderColor: 'rgba(255,255,255,0.24)',
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  categoryText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
-    textTransform: 'capitalize',
-  },
-  savedPill: {
-    backgroundColor: 'rgba(94, 234, 212, 0.14)',
-    borderColor: 'rgba(94, 234, 212, 0.55)',
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  savedPillText: {
-    color: '#D1FAE5',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  placeTitle: {
-    color: '#FFFFFF',
-    fontSize: 32,
-    fontWeight: '800',
-    lineHeight: 36,
-  },
-  placeReview: {
-    color: 'rgba(255,255,255,0.92)',
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  tagsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  tagPill: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  placeTitle: {
+    color: colors.white,
+    fontSize: typography.sizes.titleLg,
+    fontWeight: typography.weights.heavy,
+    letterSpacing: -0.8,
+    lineHeight: typography.lineHeights.hero,
   },
-  tagText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
+  placeReview: {
+    color: 'rgba(255,255,255,0.92)',
+    fontSize: typography.sizes.body,
+    lineHeight: typography.lineHeights.body,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  hintRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  hintText: {
+    color: colors.textSoft,
+    fontSize: typography.sizes.bodySm,
+    fontWeight: typography.weights.semibold,
+  },
+  emptyTitle: {
+    color: colors.text,
+    fontSize: typography.sizes.titleSm,
+    fontWeight: typography.weights.heavy,
+  },
+  emptyText: {
+    color: colors.textMuted,
+    fontSize: typography.sizes.body,
+    lineHeight: typography.lineHeights.body,
   },
   actionRow: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  detailButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    minWidth: 140,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-  },
-  detailButtonText: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  swipeHintRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingBottom: spacing.xs,
-  },
-  swipeHint: {
-    color: colors.textMuted,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  emptyStateCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 24,
-    borderWidth: 1,
-    gap: spacing.md,
-    marginTop: spacing.lg,
-    padding: spacing.lg,
-  },
-  emptyStateTitle: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  emptyStateText: {
-    color: colors.textMuted,
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  primaryButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 14,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  secondaryButton: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 14,
-  },
-  secondaryButtonText: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '700',
-    textAlign: 'center',
+  flexButton: {
+    flex: 1,
   },
 });
