@@ -16,13 +16,13 @@ export function PlaceDetailScreen({ route }: Props) {
   const place = mockPlaces.find((item) => item.id === placeId) ?? mockPlaces[0];
   const saved = isSaved(place.id);
 
-  const handleSaveToggle = async () => {
+  const handleSaveToggle = () => {
     if (saved) {
-      await removePlace(place.id);
+      removePlace(place.id);
       return;
     }
 
-    await savePlace(place.id);
+    savePlace(place.id);
   };
 
   return (
@@ -38,7 +38,7 @@ export function PlaceDetailScreen({ route }: Props) {
             </View>
             <Pressable
               style={[styles.saveButton, saved && styles.saveButtonActive]}
-              onPress={() => void handleSaveToggle()}
+              onPress={handleSaveToggle}
             >
               <Text style={[styles.saveButtonText, saved && styles.saveButtonTextActive]}>
                 {saved ? 'Saved' : 'Save'}

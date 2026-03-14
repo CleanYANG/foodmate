@@ -11,7 +11,7 @@ import { spacing } from '../theme/spacing';
 type Props = NativeStackScreenProps<RootStackParamList, 'SavedPlaces'>;
 
 export function SavedPlacesScreen({ navigation }: Props) {
-  const { savedPlaceIds, isReady } = useSavedPlaces();
+  const { savedPlaceIds, removePlace } = useSavedPlaces();
   const savedPlaces = mockPlaces.filter((place) => savedPlaceIds.includes(place.id));
 
   return (
@@ -21,17 +21,12 @@ export function SavedPlacesScreen({ navigation }: Props) {
           <Text style={styles.eyebrow}>Saved</Text>
           <Text style={styles.title}>Your favorite places</Text>
           <Text style={styles.subtitle}>
-            Right-swiped spots stay here so you can come back to them later.
+            Simple local app state for now. No backend, no sync, just the places you saved in this
+            session.
           </Text>
         </View>
 
-        {!isReady ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>Loading saved places…</Text>
-          </View>
-        ) : null}
-
-        {isReady && savedPlaces.length === 0 ? (
+        {savedPlaces.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>Nothing saved yet</Text>
             <Text style={styles.emptyText}>
@@ -40,21 +35,26 @@ export function SavedPlacesScreen({ navigation }: Props) {
           </View>
         ) : null}
 
-        {isReady && savedPlaces.length > 0
-          ? savedPlaces.map((place) => (
-              <Pressable
-                key={place.id}
-                style={styles.placeCard}
-                onPress={() => navigation.navigate('PlaceDetail', { placeId: place.id })}
-              >
-                <Image source={{ uri: place.imageUrl }} style={styles.placeImage} />
-                <View style={styles.placeBody}>
-                  <Text style={styles.placeTitle}>{place.name}</Text>
-                  <Text style={styles.placeReview}>{place.shortReview}</Text>
-                </View>
+        {savedPlaces.map((place) => (
+          <View key={place.id} style={styles.placeCard}>
+            <Pressable
+              style={styles.cardTapArea}
+              onPress={() => navigation.navigate('PlaceDetail', { placeId: place.id })}
+            >
+              <Image source={{ uri: place.imageUrl }} style={styles.placeImage} />
+              <View style={styles.placeBody}>
+                <Text style={styles.placeTitle}>{place.name}</Text>
+                <Text style={styles.placeReview}>{place.shortReview}</Text>
+              </View>
+            </Pressable>
+
+            <View style={styles.cardFooter}>
+              <Pressable style={styles.removeButton} onPress={() => removePlace(place.id)}>
+                <Text style={styles.removeButtonText}>Remove</Text>
               </Pressable>
-            ))
-          : null}
+            </View>
+          </View>
+        ))}
       </ScrollView>
     </Screen>
   );
@@ -112,6 +112,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
   },
+  cardTapArea: {
+    overflow: 'hidden',
+  },
   placeImage: {
     height: 220,
     width: '100%',
@@ -129,5 +132,22 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 15,
     lineHeight: 22,
+  },
+  cardFooter: {
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+    padding: spacing.md,
+  },
+  removeButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFF1F2',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  removeButtonText: {
+    color: '#BE123C',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

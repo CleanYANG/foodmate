@@ -43,11 +43,11 @@ export function HomeScreen({ navigation }: Props) {
     }).start(() => setFeedback(null));
   };
 
-  const advanceCard = async (direction: 'left' | 'right') => {
+  const advanceCard = (direction: 'left' | 'right') => {
     const shouldSave = direction === 'right' && currentPlace;
 
     if (shouldSave) {
-      await savePlace(currentPlace.id);
+      savePlace(currentPlace.id);
     }
 
     Animated.timing(pan, {
@@ -82,12 +82,12 @@ export function HomeScreen({ navigation }: Props) {
         },
         onPanResponderRelease: (_, gestureState) => {
           if (gestureState.dx > SWIPE_THRESHOLD) {
-            void advanceCard('right');
+            advanceCard('right');
             return;
           }
 
           if (gestureState.dx < -SWIPE_THRESHOLD) {
-            void advanceCard('left');
+            advanceCard('left');
             return;
           }
 
