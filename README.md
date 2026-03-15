@@ -68,12 +68,16 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 
 This app:
 
-- reads places with the public anon key
-- uses anonymous auth for app users
-- creates a matching row in `public.users` on first launch
-- stores saved places in `public.saved_places`
+- reads places with the public anon key so guests can browse
+- uses Supabase Auth email magic links for sign-in
+- creates a matching row in `public.users` for signed-in users
+- stores saved places in `public.saved_places` only for authenticated users
 
-To make saved places work, enable **Anonymous Sign-Ins** in your Supabase Auth settings.
+To make auth work cleanly:
+
+- enable **Email** sign-in in Supabase Auth
+- set your email template/site URL settings so the magic link can return to the app
+- keep the Expo app scheme as `citytalk`
 
 ## Notes
 

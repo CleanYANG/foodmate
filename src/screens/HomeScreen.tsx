@@ -73,7 +73,9 @@ export function HomeScreen({ navigation }: Props) {
     const activePlace = currentPlace;
 
     if (direction === 'right' && activePlace) {
-      void savePlace(activePlace.id);
+      void savePlace(activePlace.id).catch(() => {
+        // Prompting/rollback is handled in context.
+      });
     }
 
     Animated.timing(pan, {

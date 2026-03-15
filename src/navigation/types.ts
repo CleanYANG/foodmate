@@ -3,4 +3,5 @@ export type RootStackParamList = {
   PlaceDetail: { placeId?: string } | undefined;
   SavedPlaces: undefined;
   Profile: undefined;
+  SignIn: undefined;
 };

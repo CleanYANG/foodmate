@@ -93,12 +93,16 @@ export function PlaceDetailScreen({ route }: Props) {
   const saved = isSaved(place.id);
 
   const handleSaveToggle = async () => {
-    if (saved) {
-      await removePlace(place.id);
-      return;
-    }
+    try {
+      if (saved) {
+        await removePlace(place.id);
+        return;
+      }
 
-    await savePlace(place.id);
+      await savePlace(place.id);
+    } catch {
+      // Prompting/error state is handled upstream.
+    }
   };
 
   return (

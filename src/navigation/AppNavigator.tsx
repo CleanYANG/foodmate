@@ -4,12 +4,16 @@ import { HomeScreen } from '../screens/HomeScreen';
 import { PlaceDetailScreen } from '../screens/PlaceDetailScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SavedPlacesScreen } from '../screens/SavedPlacesScreen';
+import { SignInScreen } from '../screens/SignInScreen';
+import { useAuth } from '../store/AuthContext';
 import { colors } from '../theme/colors';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function AppNavigator() {
+  const { isInitializing, isAuthenticated } = useAuth();
+
   return (
     <Stack.Navigator
       initialRouteName="Home"
@@ -36,9 +40,16 @@ export function AppNavigator() {
       <Stack.Screen
         name="SavedPlaces"
         component={SavedPlacesScreen}
-        options={{ title: 'Saved Places' }}
+        options={{ title: isAuthenticated ? 'Saved Places' : 'Saved Places (Sign in to use)' }}
       />
-      <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          title: isInitializing ? 'Account' : isAuthenticated ? 'Profile' : 'Sign In',
+        }}
+      />
+      <Stack.Screen name="SignIn" component={SignInScreen} options={{ title: 'Sign In' }} />
     </Stack.Navigator>
   );
 }

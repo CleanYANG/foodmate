@@ -1,4 +1,4 @@
-import { ensureAppUser } from './authService';
+import { AuthRequiredError, requireAuthenticatedUserId } from './authService';
 import { supabase } from '../lib/supabase';
 import type { Place, PlaceCategory, SavedPlace } from '../types/place';
 
@@ -131,7 +131,17 @@ export async function fetchPlaceById(placeId: string): Promise<Place | null> {
 }
 
 export async function fetchSavedPlaces(): Promise<SavedPlace[]> {
-  const userId = await ensureAppUser();
+  let userId: string;
+
+  try {
+    userId = await requireAuthenticatedUserId();
+  } catch (error) {
+    if (error instanceof AuthRequiredError) {
+      return [];
+    }
+
+    throw error;
+  }
 
   const { data, error } = await supabase
     .from('saved_places')
@@ -152,7 +162,7 @@ export async function fetchSavedPlaces(): Promise<SavedPlace[]> {
 }
 
 export async function savePlace(placeId: string): Promise<void> {
-  const userId = await ensureAppUser();
+  const userId = await requireAuthenticatedUserId();
 
   const { error } = await supabase.from('saved_places').upsert(
     {
@@ -171,7 +181,7 @@ export async function savePlace(placeId: string): Promise<void> {
 }
 
 export async function unsavePlace(placeId: string): Promise<void> {
-  const userId = await ensureAppUser();
+  const userId = await requireAuthenticatedUserId();
 
   const { error } = await supabase
     .from('saved_places')

@@ -8,11 +8,15 @@ import {
   useState,
 } from 'react';
 
+import { Alert } from 'react-native';
+
+import { useAuth } from './AuthContext';
 import {
   fetchSavedPlaces,
   savePlace as savePlaceInService,
   unsavePlace,
 } from '../services/placeService';
+import { AuthRequiredError } from '../services/authService';
 
 type SavedPlacesContextValue = {
   savedPlaceIds: string[];
@@ -22,6 +26,7 @@ type SavedPlacesContextValue = {
   removePlace: (placeId: string) => Promise<void>;
   isSaved: (placeId: string) => boolean;
   refreshSavedPlaces: () => Promise<void>;
+  promptSignIn: () => void;
 };
 
 const SavedPlacesContext = createContext<SavedPlacesContextValue | undefined>(undefined);
@@ -35,11 +40,26 @@ function toErrorMessage(error: unknown) {
 }
 
 export function SavedPlacesProvider({ children }: PropsWithChildren) {
+  const { isAuthenticated } = useAuth();
   const [savedPlaceIds, setSavedPlaceIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const promptSignIn = useCallback(() => {
+    Alert.alert(
+      'Sign in to save places',
+      'Guests can browse freely, but saving places needs a quick magic-link sign-in.',
+    );
+  }, []);
+
   const refreshSavedPlaces = useCallback(async () => {
+    if (!isAuthenticated) {
+      setSavedPlaceIds([]);
+      setErrorMessage(null);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage(null);
 
@@ -51,7 +71,7 @@ export function SavedPlacesProvider({ children }: PropsWithChildren) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     void refreshSavedPlaces();
@@ -59,6 +79,11 @@ export function SavedPlacesProvider({ children }: PropsWithChildren) {
 
   const savePlace = useCallback(
     async (placeId: string) => {
+      if (!isAuthenticated) {
+        promptSignIn();
+        throw new AuthRequiredError();
+      }
+
       const previousValue = savedPlaceIds;
 
       setSavedPlaceIds((currentValue) =>
@@ -74,11 +99,16 @@ export function SavedPlacesProvider({ children }: PropsWithChildren) {
         throw error;
       }
     },
-    [savedPlaceIds],
+    [isAuthenticated, promptSignIn, savedPlaceIds],
   );
 
   const removePlace = useCallback(
     async (placeId: string) => {
+      if (!isAuthenticated) {
+        promptSignIn();
+        throw new AuthRequiredError();
+      }
+
       const previousValue = savedPlaceIds;
 
       setSavedPlaceIds((currentValue) => currentValue.filter((savedId) => savedId !== placeId));
@@ -92,7 +122,7 @@ export function SavedPlacesProvider({ children }: PropsWithChildren) {
         throw error;
       }
     },
-    [savedPlaceIds],
+    [isAuthenticated, promptSignIn, savedPlaceIds],
   );
 
   const isSaved = useCallback(
@@ -109,8 +139,18 @@ export function SavedPlacesProvider({ children }: PropsWithChildren) {
       removePlace,
       isSaved,
       refreshSavedPlaces,
+      promptSignIn,
     }),
-    [savedPlaceIds, isLoading, errorMessage, savePlace, removePlace, isSaved, refreshSavedPlaces],
+    [
+      savedPlaceIds,
+      isLoading,
+      errorMessage,
+      savePlace,
+      removePlace,
+      isSaved,
+      refreshSavedPlaces,
+      promptSignIn,
+    ],
   );
 
   return <SavedPlacesContext.Provider value={value}>{children}</SavedPlacesContext.Provider>;

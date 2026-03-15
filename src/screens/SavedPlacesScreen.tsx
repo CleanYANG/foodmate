@@ -9,6 +9,7 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import { Tag } from '../components/Tag';
 import type { RootStackParamList } from '../navigation/types';
 import { fetchPlaces } from '../services/placeService';
+import { useAuth } from '../store/AuthContext';
 import { useSavedPlaces } from '../store/SavedPlacesContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
@@ -26,6 +27,7 @@ function toErrorMessage(error: unknown) {
 }
 
 export function SavedPlacesScreen({ navigation }: Props) {
+  const { isAuthenticated } = useAuth();
   const [places, setPlaces] = useState<Place[]>([]);
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
   const [placesError, setPlacesError] = useState<string | null>(null);
@@ -53,6 +55,30 @@ export function SavedPlacesScreen({ navigation }: Props) {
     [places, savedPlaceIds],
   );
 
+  if (!isAuthenticated) {
+    return (
+      <Screen>
+        <View style={styles.content}>
+          <ScreenHeader
+            eyebrow="Saved"
+            title="Sign in to keep your places"
+            description="Guests can browse the full CityTalk deck, but saved places only unlock after a quick magic-link sign-in."
+          />
+
+          <Card>
+            <Text style={styles.emptyTitle}>Guest browsing is on</Text>
+            <Text style={styles.emptyText}>
+              Once you sign in, anything you save will appear here automatically.
+            </Text>
+            <Button variant="primary" onPress={() => navigation.navigate('SignIn')}>
+              Sign in with email
+            </Button>
+          </Card>
+        </View>
+      </Screen>
+    );
+  }
+
   return (
     <Screen padded={false}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -60,7 +86,7 @@ export function SavedPlacesScreen({ navigation }: Props) {
           <ScreenHeader
             eyebrow="Saved"
             title="Your collected places"
-            description="Saved places are now synced through Supabase for the current signed-in app user."
+            description="Saved places are synced through Supabase for your signed-in account."
           />
         </View>
 
@@ -113,7 +139,11 @@ export function SavedPlacesScreen({ navigation }: Props) {
               <Button
                 variant="danger"
                 style={styles.flexButton}
-                onPress={() => void removePlace(place.id)}
+                onPress={() =>
+                  void removePlace(place.id).catch(() => {
+                    // Prompting/error state is handled upstream.
+                  })
+                }
               >
                 Remove
               </Button>
