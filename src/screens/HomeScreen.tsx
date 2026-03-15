@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Dimensions, Image, PanResponder, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -7,12 +7,13 @@ import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { Tag } from '../components/Tag';
-import { mockPlaces } from '../data/mockPlaces';
 import type { RootStackParamList } from '../navigation/types';
+import { fetchPlaces } from '../services/placeService';
 import { useSavedPlaces } from '../store/SavedPlacesContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import type { Place } from '../types/place';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -20,14 +21,43 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.22;
 const SWIPE_OUT_DISTANCE = SCREEN_WIDTH * 1.2;
 
+function toErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Something went wrong while loading places.';
+}
+
 export function HomeScreen({ navigation }: Props) {
+  const [places, setPlaces] = useState<Place[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [feedback, setFeedback] = useState<'skip' | 'save' | null>(null);
-  const { savePlace, isSaved } = useSavedPlaces();
+  const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
+  const [placesError, setPlacesError] = useState<string | null>(null);
+  const { savePlace, isSaved, errorMessage: savedPlacesError } = useSavedPlaces();
   const pan = useRef(new Animated.ValueXY()).current;
 
-  const currentPlace = mockPlaces[currentIndex];
-  const hasMorePlaces = currentIndex < mockPlaces.length;
+  useEffect(() => {
+    const loadPlaces = async () => {
+      setIsLoadingPlaces(true);
+      setPlacesError(null);
+
+      try {
+        const nextPlaces = await fetchPlaces();
+        setPlaces(nextPlaces);
+      } catch (error) {
+        setPlacesError(toErrorMessage(error));
+      } finally {
+        setIsLoadingPlaces(false);
+      }
+    };
+
+    void loadPlaces();
+  }, []);
+
+  const currentPlace = places[currentIndex];
+  const hasMorePlaces = currentIndex < places.length;
   const progress = currentIndex + 1;
 
   const resetCardPosition = () => {
@@ -40,8 +70,10 @@ export function HomeScreen({ navigation }: Props) {
   };
 
   const advanceCard = (direction: 'left' | 'right') => {
-    if (direction === 'right' && currentPlace) {
-      savePlace(currentPlace.id);
+    const activePlace = currentPlace;
+
+    if (direction === 'right' && activePlace) {
+      void savePlace(activePlace.id);
     }
 
     Animated.timing(pan, {
@@ -98,6 +130,48 @@ export function HomeScreen({ navigation }: Props) {
     extrapolate: 'clamp',
   });
 
+  if (isLoadingPlaces) {
+    return (
+      <Screen>
+        <View style={styles.container}>
+          <ScreenHeader
+            eyebrow="CityTalk"
+            title="Loading places"
+            description="Pulling the latest deck from Supabase."
+          />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (placesError) {
+    return (
+      <Screen>
+        <View style={styles.container}>
+          <ScreenHeader
+            eyebrow="CityTalk"
+            title="Could not load places"
+            description={placesError}
+          />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (places.length === 0) {
+    return (
+      <Screen>
+        <View style={styles.container}>
+          <ScreenHeader
+            eyebrow="CityTalk"
+            title="No places yet"
+            description="Your places table is empty right now. Add a few rows in Supabase and this deck will populate automatically."
+          />
+        </View>
+      </Screen>
+    );
+  }
+
   if (!hasMorePlaces) {
     return (
       <Screen>
@@ -111,7 +185,7 @@ export function HomeScreen({ navigation }: Props) {
           <Card>
             <Text style={styles.emptyTitle}>All places reviewed</Text>
             <Text style={styles.emptyText}>
-              You swiped through {mockPlaces.length} places in this session.
+              You swiped through {places.length} places in this session.
             </Text>
             <View style={styles.actionRow}>
               <Button
@@ -143,7 +217,7 @@ export function HomeScreen({ navigation }: Props) {
             <ScreenHeader
               eyebrow="CityTalk"
               title="Discover places one card at a time"
-              description="A minimal swipe deck with a travel-editorial feel: skip left, save right, open details when a place catches you."
+              description="Live places from Supabase: skip left, save right, open details when a place catches you."
             />
           </View>
           <Button variant="secondary" onPress={() => navigation.navigate('SavedPlaces')}>
@@ -151,18 +225,24 @@ export function HomeScreen({ navigation }: Props) {
           </Button>
         </View>
 
+        {savedPlacesError ? (
+          <Card style={styles.noticeCard}>
+            <Text style={styles.noticeText}>{savedPlacesError}</Text>
+          </Card>
+        ) : null}
+
         <Card style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <Text style={styles.progressLabel}>Deck progress</Text>
             <Text style={styles.progressValue}>
-              {Math.min(progress, mockPlaces.length)} / {mockPlaces.length}
+              {Math.min(progress, places.length)} / {places.length}
             </Text>
           </View>
           <View style={styles.progressTrack}>
             <View
               style={[
                 styles.progressFill,
-                { width: `${(Math.min(progress, mockPlaces.length) / mockPlaces.length) * 100}%` },
+                { width: `${(Math.min(progress, places.length) / places.length) * 100}%` },
               ]}
             />
           </View>
@@ -201,11 +281,13 @@ export function HomeScreen({ navigation }: Props) {
               <Text style={styles.placeTitle}>{currentPlace.name}</Text>
               <Text style={styles.placeReview}>{currentPlace.shortReview}</Text>
 
-              <View style={styles.tagsRow}>
-                {currentPlace.tags.map((tag) => (
-                  <Tag key={tag} label={`#${tag}`} />
-                ))}
-              </View>
+              {currentPlace.tags.length > 0 ? (
+                <View style={styles.tagsRow}>
+                  {currentPlace.tags.map((tag) => (
+                    <Tag key={tag} label={`#${tag}`} />
+                  ))}
+                </View>
+              ) : null}
 
               <Button
                 variant="secondary"
@@ -239,6 +321,14 @@ const styles = StyleSheet.create({
   },
   headerCopy: {
     flex: 1,
+  },
+  noticeCard: {
+    padding: spacing.md,
+  },
+  noticeText: {
+    color: colors.textMuted,
+    fontSize: typography.sizes.bodySm,
+    lineHeight: typography.lineHeights.body,
   },
   progressCard: {
     gap: spacing.sm,

@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -6,18 +7,51 @@ import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { Tag } from '../components/Tag';
-import { mockPlaces } from '../data/mockPlaces';
 import type { RootStackParamList } from '../navigation/types';
+import { fetchPlaces } from '../services/placeService';
 import { useSavedPlaces } from '../store/SavedPlacesContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import type { Place } from '../types/place';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SavedPlaces'>;
 
+function toErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Something went wrong while loading places.';
+}
+
 export function SavedPlacesScreen({ navigation }: Props) {
-  const { savedPlaceIds, removePlace } = useSavedPlaces();
-  const savedPlaces = mockPlaces.filter((place) => savedPlaceIds.includes(place.id));
+  const [places, setPlaces] = useState<Place[]>([]);
+  const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
+  const [placesError, setPlacesError] = useState<string | null>(null);
+  const { savedPlaceIds, removePlace, isLoading, errorMessage } = useSavedPlaces();
+
+  useEffect(() => {
+    const loadPlaces = async () => {
+      setIsLoadingPlaces(true);
+      setPlacesError(null);
+
+      try {
+        setPlaces(await fetchPlaces());
+      } catch (error) {
+        setPlacesError(toErrorMessage(error));
+      } finally {
+        setIsLoadingPlaces(false);
+      }
+    };
+
+    void loadPlaces();
+  }, []);
+
+  const savedPlaces = useMemo(
+    () => places.filter((place) => savedPlaceIds.includes(place.id)),
+    [places, savedPlaceIds],
+  );
 
   return (
     <Screen padded={false}>
@@ -26,11 +60,30 @@ export function SavedPlacesScreen({ navigation }: Props) {
           <ScreenHeader
             eyebrow="Saved"
             title="Your collected places"
-            description="A simple local list for now — just the places you saved during this app session."
+            description="Saved places are now synced through Supabase for the current signed-in app user."
           />
         </View>
 
-        {savedPlaces.length === 0 ? (
+        {errorMessage ? (
+          <Card>
+            <Text style={styles.emptyText}>{errorMessage}</Text>
+          </Card>
+        ) : null}
+
+        {placesError ? (
+          <Card>
+            <Text style={styles.emptyText}>{placesError}</Text>
+          </Card>
+        ) : null}
+
+        {isLoading || isLoadingPlaces ? (
+          <Card>
+            <Text style={styles.emptyTitle}>Loading saved places</Text>
+            <Text style={styles.emptyText}>Syncing your saved list and place details.</Text>
+          </Card>
+        ) : null}
+
+        {!isLoading && !isLoadingPlaces && savedPlaces.length === 0 ? (
           <Card>
             <Text style={styles.emptyTitle}>Nothing saved yet</Text>
             <Text style={styles.emptyText}>
@@ -60,7 +113,7 @@ export function SavedPlacesScreen({ navigation }: Props) {
               <Button
                 variant="danger"
                 style={styles.flexButton}
-                onPress={() => removePlace(place.id)}
+                onPress={() => void removePlace(place.id)}
               >
                 Remove
               </Button>

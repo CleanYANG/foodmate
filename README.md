@@ -39,11 +39,42 @@ npm run format
 ```txt
 src/
   components/
+  config/
+  lib/
   navigation/
   screens/
+  services/
+  store/
   theme/
+  types/
 ```
+
+## Environment variables
+
+Create a `.env` file from `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Required variables:
+
+```bash
+EXPO_PUBLIC_SUPABASE_URL=...
+EXPO_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+## Supabase notes
+
+This app:
+
+- reads places with the public anon key
+- uses anonymous auth for app users
+- creates a matching row in `public.users` on first launch
+- stores saved places in `public.saved_places`
+
+To make saved places work, enable **Anonymous Sign-Ins** in your Supabase Auth settings.
 
 ## Notes
 
-This project is intentionally small and easy to extend. Start by replacing the Home screen placeholder with your swipeable place feed.
+This project is intentionally small and easy to extend. The current data flow is organized so screens stay thin and Supabase access lives in the service layer.
