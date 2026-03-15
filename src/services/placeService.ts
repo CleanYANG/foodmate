@@ -1,6 +1,7 @@
 import { AuthRequiredError, requireAuthenticatedUserId } from './authService';
 import { supabase } from '../lib/supabase';
 import type { Place, PlaceCategory, SavedPlace } from '../types/place';
+import type { PlaceReview } from '../types/review';
 
 type PlaceRow = {
   id: string;
@@ -18,6 +19,24 @@ type PlaceRow = {
 type SavedPlaceRow = {
   place_id: string;
   created_at: string;
+};
+
+type ReviewRow = {
+  id: string;
+  place_id: string;
+  body: string;
+  created_at: string;
+  user_id: string;
+  users:
+    | {
+        display_name: string | null;
+        username: string | null;
+      }
+    | {
+        display_name: string | null;
+        username: string | null;
+      }[]
+    | null;
 };
 
 function inferCategory(place: Pick<Place, 'tags' | 'name'>): PlaceCategory {
@@ -99,6 +118,21 @@ function mapPlaceRow(placeRow: PlaceRow): Place {
   return place;
 }
 
+function mapReviewRow(reviewRow: ReviewRow): PlaceReview {
+  const reviewer = Array.isArray(reviewRow.users) ? reviewRow.users[0] : reviewRow.users;
+  const reviewerName =
+    reviewer?.display_name?.trim() || reviewer?.username?.trim() || 'Anonymous CityTalk User';
+
+  return {
+    id: reviewRow.id,
+    placeId: reviewRow.place_id,
+    body: reviewRow.body,
+    createdAt: reviewRow.created_at,
+    reviewerName,
+    userId: reviewRow.user_id,
+  };
+}
+
 export async function fetchPlaces(): Promise<Place[]> {
   const { data, error } = await supabase
     .from('places')
@@ -159,6 +193,46 @@ export async function fetchSavedPlaces(): Promise<SavedPlace[]> {
       savedAt: row.created_at,
     })) ?? []
   );
+}
+
+export async function fetchPlaceReviews(placeId: string): Promise<PlaceReview[]> {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('id, place_id, body, created_at, user_id, users(display_name, username)')
+    .eq('place_id', placeId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data as ReviewRow[] | null) ?? []).map(mapReviewRow);
+}
+
+export async function addPlaceReview(placeId: string, body: string): Promise<PlaceReview> {
+  const trimmedBody = body.trim();
+
+  if (!trimmedBody) {
+    throw new Error('Review text cannot be empty.');
+  }
+
+  const userId = await requireAuthenticatedUserId();
+
+  const { data, error } = await supabase
+    .from('reviews')
+    .insert({
+      place_id: placeId,
+      user_id: userId,
+      body: trimmedBody,
+    })
+    .select('id, place_id, body, created_at, user_id, users(display_name, username)')
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapReviewRow(data as ReviewRow);
 }
 
 export async function savePlace(placeId: string): Promise<void> {
