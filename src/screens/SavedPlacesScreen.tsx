@@ -191,7 +191,7 @@ export function SavedPlacesScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   content: {
-    gap: spacing.md,
+    gap: spacing.lg,
     padding: spacing.md,
     paddingBottom: spacing.xxl,
   },
@@ -210,6 +210,7 @@ const styles = StyleSheet.create({
   },
   placeCard: {
     padding: spacing.md,
+    gap: spacing.md,
   },
   loadingImage: {
     borderRadius: 18,
@@ -217,8 +218,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   placeImage: {
-    borderRadius: 18,
-    height: 220,
+    borderRadius: 22,
+    height: 228,
     width: '100%',
   },
   placeBody: {
@@ -244,12 +245,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: typography.sizes.titleSm,
     fontWeight: typography.weights.bold,
-    lineHeight: 28,
+    lineHeight: 30,
+    letterSpacing: -0.3,
   },
   placeReview: {
     color: colors.textMuted,
     fontSize: typography.sizes.bodySm,
-    lineHeight: 22,
+    lineHeight: typography.lineHeights.body,
   },
   tagsRow: {
     flexDirection: 'row',

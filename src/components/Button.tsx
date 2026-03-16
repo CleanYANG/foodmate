@@ -22,7 +22,13 @@ export function Button({
   return (
     <Pressable
       disabled={disabled}
-      style={[styles.base, styles[variant], disabled ? styles.disabled : null, style]}
+      style={({ pressed }) => [
+        styles.base,
+        styles[variant],
+        pressed && !disabled ? styles.pressed : null,
+        disabled ? styles.disabled : null,
+        style,
+      ]}
       onPress={onPress}
     >
       <Text
@@ -37,21 +43,30 @@ export function Button({
 const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 18,
     justifyContent: 'center',
-    minHeight: 52,
+    minHeight: 54,
     paddingHorizontal: spacing.md,
-    paddingVertical: 14,
+    paddingVertical: 15,
   },
   label: {
     fontSize: typography.sizes.bodySm,
     fontWeight: typography.weights.bold,
+    letterSpacing: 0.1,
+  },
+  pressed: {
+    transform: [{ scale: 0.985 }],
   },
   disabled: {
     opacity: 0.55,
   },
   primary: {
     backgroundColor: colors.primary,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 3,
   },
   secondary: {
     backgroundColor: colors.surface,

@@ -175,7 +175,13 @@ export function HomeScreen({ navigation }: Props) {
 
   const rotate = pan.x.interpolate({
     inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
-    outputRange: ['-8deg', '0deg', '8deg'],
+    outputRange: ['-7deg', '0deg', '7deg'],
+    extrapolate: 'clamp',
+  });
+
+  const cardScale = pan.x.interpolate({
+    inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
+    outputRange: [0.985, 1, 0.985],
     extrapolate: 'clamp',
   });
 
@@ -393,7 +399,7 @@ export function HomeScreen({ navigation }: Props) {
             style={[
               styles.swipeCard,
               {
-                transform: [...pan.getTranslateTransform(), { rotate }],
+                transform: [...pan.getTranslateTransform(), { rotate }, { scale: cardScale }],
               },
             ]}
             {...panResponder.panHandlers}
@@ -451,7 +457,7 @@ export function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   headerRow: {
     alignItems: 'flex-start',
@@ -465,6 +471,7 @@ const styles = StyleSheet.create({
   filterScrollContent: {
     gap: spacing.sm,
     paddingRight: spacing.sm,
+    paddingBottom: spacing.xs,
   },
   loadingDeckCard: {
     minHeight: 560,
@@ -514,6 +521,7 @@ const styles = StyleSheet.create({
   progressCard: {
     gap: spacing.sm,
     padding: spacing.md,
+    borderRadius: 22,
   },
   progressHeader: {
     alignItems: 'center',
@@ -543,20 +551,20 @@ const styles = StyleSheet.create({
   },
   deckArea: {
     flex: 1,
-    minHeight: 560,
+    minHeight: 580,
   },
   swipeCard: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
-    borderRadius: 28,
+    borderRadius: 32,
     borderWidth: 1,
     flex: 1,
     overflow: 'hidden',
-    shadowColor: '#2C221B',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.08,
-    shadowRadius: 28,
-    elevation: 5,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.14,
+    shadowRadius: 30,
+    elevation: 8,
   },
   heroImage: {
     height: '100%',
@@ -565,16 +573,16 @@ const styles = StyleSheet.create({
   },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.overlay,
+    backgroundColor: 'rgba(18, 15, 13, 0.22)',
   },
   feedbackPill: {
     borderRadius: 999,
     left: spacing.lg,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
     position: 'absolute',
     top: spacing.lg,
-    transform: [{ rotate: '-8deg' }],
+    transform: [{ rotate: '-7deg' }],
   },
   feedbackSave: {
     backgroundColor: colors.secondarySoft,
@@ -591,7 +599,7 @@ const styles = StyleSheet.create({
   cardContent: {
     flex: 1,
     justifyContent: 'flex-end',
-    padding: spacing.lg,
+    padding: spacing.xl,
     gap: spacing.md,
   },
   topMetaRow: {
@@ -604,13 +612,16 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: typography.sizes.titleLg,
     fontWeight: typography.weights.heavy,
-    letterSpacing: -0.8,
+    letterSpacing: -0.9,
     lineHeight: typography.lineHeights.hero,
+    textShadowColor: 'rgba(0,0,0,0.14)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 14,
   },
   placeReview: {
-    color: 'rgba(255,255,255,0.92)',
+    color: 'rgba(255,255,255,0.94)',
     fontSize: typography.sizes.body,
-    lineHeight: typography.lineHeights.body,
+    lineHeight: typography.lineHeights.relaxed,
   },
   tagsRow: {
     flexDirection: 'row',
@@ -625,6 +636,7 @@ const styles = StyleSheet.create({
     color: colors.textSoft,
     fontSize: typography.sizes.bodySm,
     fontWeight: typography.weights.semibold,
+    letterSpacing: 0.2,
   },
   emptyTitle: {
     color: colors.text,

@@ -1,6 +1,7 @@
 import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 import { colors } from '../theme/colors';
+import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 
 type TagProps = {
@@ -54,7 +55,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: spacing.xs + 1,
   },
   primary: {
     backgroundColor: colors.primarySoft,
@@ -70,6 +71,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: typography.sizes.caption,
     fontWeight: typography.weights.semibold,
+    letterSpacing: 0.15,
   },
   primaryLabel: {
     color: colors.primary,

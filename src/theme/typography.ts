@@ -3,11 +3,11 @@ export const typography = {
   sizes: {
     eyebrow: 12,
     caption: 13,
-    bodySm: 14,
+    bodySm: 15,
     body: 16,
-    titleSm: 20,
-    titleMd: 28,
-    titleLg: 36,
+    titleSm: 22,
+    titleMd: 30,
+    titleLg: 38,
   },
   weights: {
     regular: '400',
@@ -17,10 +17,15 @@ export const typography = {
     heavy: '800',
   },
   lineHeights: {
-    compact: 18,
-    body: 24,
-    relaxed: 28,
-    title: 34,
-    hero: 40,
+    compact: 20,
+    body: 25,
+    relaxed: 30,
+    title: 36,
+    hero: 42,
+  },
+  letterSpacing: {
+    tight: -0.6,
+    normal: 0,
+    wide: 1.2,
   },
 } as const;

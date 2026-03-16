@@ -248,13 +248,16 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
     <Screen padded={false}>
       <ScrollView contentContainerStyle={styles.content}>
         <Image source={{ uri: place.imageUrl }} style={styles.heroImage} />
+        <View style={styles.heroImageOverlay} />
 
         <View style={styles.body}>
-          <ScreenHeader
-            eyebrow={place.category}
-            title={place.name}
-            description={place.shortReview}
-          />
+          <View style={styles.headerCard}>
+            <ScreenHeader
+              eyebrow={place.category}
+              title={place.name}
+              description={place.shortReview}
+            />
+          </View>
 
           {saveFeedbackMessage ? (
             <InlineNotice message={saveFeedbackMessage} tone="success" />
@@ -382,12 +385,31 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   heroImage: {
-    height: 420,
+    height: 430,
     width: '100%',
   },
+  heroImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    bottom: undefined,
+    height: 430,
+    backgroundColor: 'rgba(20, 16, 13, 0.08)',
+  },
   body: {
-    gap: spacing.md,
+    gap: spacing.lg,
     padding: spacing.md,
+    marginTop: -28,
+  },
+  headerCard: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
   },
   tagsRow: {
     flexDirection: 'row',
@@ -429,11 +451,12 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: typography.sizes.titleSm,
     fontWeight: typography.weights.bold,
+    letterSpacing: -0.3,
   },
   bodyText: {
     color: colors.textMuted,
     fontSize: typography.sizes.body,
-    lineHeight: typography.lineHeights.body,
+    lineHeight: typography.lineHeights.relaxed,
   },
   reviewHeaderRow: {
     alignItems: 'center',
@@ -446,19 +469,19 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.semibold,
   },
   reviewComposer: {
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   reviewInput: {
     backgroundColor: colors.surfaceMuted,
     borderColor: colors.border,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
     color: colors.text,
     fontSize: typography.sizes.bodySm,
     lineHeight: typography.lineHeights.body,
-    minHeight: 96,
+    minHeight: 104,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
   },
   reviewLoadingBlock: {
     gap: spacing.sm,

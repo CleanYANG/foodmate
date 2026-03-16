@@ -28,19 +28,20 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: typography.sizes.eyebrow,
     fontWeight: typography.weights.bold,
-    letterSpacing: 1.4,
+    letterSpacing: typography.letterSpacing.wide,
     textTransform: 'uppercase',
   },
   title: {
     color: colors.text,
     fontSize: typography.sizes.titleMd,
     fontWeight: typography.weights.heavy,
-    letterSpacing: -0.6,
+    letterSpacing: typography.letterSpacing.tight,
     lineHeight: typography.lineHeights.title,
   },
   description: {
     color: colors.textMuted,
     fontSize: typography.sizes.body,
-    lineHeight: typography.lineHeights.body,
+    lineHeight: typography.lineHeights.relaxed,
+    maxWidth: 720,
   },
 });

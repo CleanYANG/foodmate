@@ -24,6 +24,8 @@ export function AppNavigator({ shouldShowOnboarding, completeOnboarding }: AppNa
     <Stack.Navigator
       initialRouteName={shouldShowOnboarding ? 'Onboarding' : 'Home'}
       screenOptions={{
+        animation: 'slide_from_right',
+        animationDuration: 220,
         headerStyle: {
           backgroundColor: colors.surface,
         },
@@ -31,6 +33,7 @@ export function AppNavigator({ shouldShowOnboarding, completeOnboarding }: AppNa
         headerTintColor: colors.text,
         headerTitleStyle: {
           fontWeight: '700',
+          fontSize: 17,
         },
         contentStyle: {
           backgroundColor: colors.background,
