@@ -32,6 +32,8 @@ npm run start
 npm run lint
 npm run typecheck
 npm run format
+npm run admin:install
+npm run admin:dev
 ```
 
 ## Folder structure
@@ -64,6 +66,14 @@ EXPO_PUBLIC_SUPABASE_URL=...
 EXPO_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
+Admin web variables (`admin-web/.env`):
+
+```bash
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+VITE_ADMIN_EMAILS=founder@example.com
+```
+
 ## Supabase notes
 
 This app:
@@ -78,6 +88,34 @@ To make auth work cleanly:
 - enable **Email** sign-in in Supabase Auth
 - set your email template/site URL settings so the magic link can return to the app
 - keep the Expo app scheme as `citytalk`
+
+## Admin web panel
+
+A lightweight founder-focused admin app lives in `admin-web/`.
+
+It includes:
+- list all places
+- search places and tags
+- create a new place
+- edit an existing place
+- delete a place
+- manage tags as comma-separated chips/tags input
+- image URL editing
+- simple admin protection via Supabase sign-in + `VITE_ADMIN_EMAILS`
+
+Run it with:
+
+```bash
+cd admin-web
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Important:
+- the admin UI assumes your Supabase `places` table supports a `tags text[]` column
+- writes will only succeed if your Supabase policies allow the signed-in admin user to manage `places`
+- this is optimized for solo founder use, not enterprise RBAC
 
 ## Notes
 
