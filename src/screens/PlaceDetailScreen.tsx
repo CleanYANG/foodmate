@@ -4,8 +4,11 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { InlineNotice } from '../components/InlineNotice';
 import { Screen } from '../components/Screen';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { SkeletonBlock } from '../components/SkeletonBlock';
+import { StateCard } from '../components/StateCard';
 import { Tag } from '../components/Tag';
 import { formatTagLabel } from '../lib/placeTags';
 import type { RootStackParamList } from '../navigation/types';
@@ -47,73 +50,103 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [reviewErrorMessage, setReviewErrorMessage] = useState<string | null>(null);
+  const [saveFeedbackMessage, setSaveFeedbackMessage] = useState<string | null>(null);
+  const [reviewFeedbackMessage, setReviewFeedbackMessage] = useState<string | null>(null);
   const { isSaved, savePlace, removePlace, promptSignIn } = useSavedPlaces();
 
-  useEffect(() => {
-    const loadPlace = async () => {
-      if (!placeId) {
-        setErrorMessage('Missing place id.');
-        setIsLoading(false);
+  const loadPlace = async () => {
+    if (!placeId) {
+      setErrorMessage('Missing place id.');
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const nextPlace = await fetchPlaceById(placeId);
+
+      if (!nextPlace) {
+        setErrorMessage('This place could not be found.');
         return;
       }
 
-      setIsLoading(true);
-      setErrorMessage(null);
+      setPlace(nextPlace);
+    } catch (error) {
+      setErrorMessage(toErrorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      try {
-        const nextPlace = await fetchPlaceById(placeId);
+  const loadReviews = async () => {
+    if (!placeId) {
+      setIsLoadingReviews(false);
+      return;
+    }
 
-        if (!nextPlace) {
-          setErrorMessage('This place could not be found.');
-          return;
-        }
+    setIsLoadingReviews(true);
+    setReviewErrorMessage(null);
 
-        setPlace(nextPlace);
-      } catch (error) {
-        setErrorMessage(toErrorMessage(error));
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    try {
+      const nextReviews = await fetchPlaceReviews(placeId);
+      setReviews(nextReviews);
+    } catch (error) {
+      setReviewErrorMessage(toErrorMessage(error));
+    } finally {
+      setIsLoadingReviews(false);
+    }
+  };
 
+  useEffect(() => {
     void loadPlace();
   }, [placeId]);
 
   useEffect(() => {
-    const loadReviews = async () => {
-      if (!placeId) {
-        setIsLoadingReviews(false);
-        return;
-      }
-
-      setIsLoadingReviews(true);
-      setReviewErrorMessage(null);
-
-      try {
-        const nextReviews = await fetchPlaceReviews(placeId);
-        setReviews(nextReviews);
-      } catch (error) {
-        setReviewErrorMessage(toErrorMessage(error));
-      } finally {
-        setIsLoadingReviews(false);
-      }
-    };
-
     void loadReviews();
   }, [placeId]);
 
   const trimmedReviewText = useMemo(() => reviewText.trim(), [reviewText]);
 
+  useEffect(() => {
+    if (!saveFeedbackMessage && !reviewFeedbackMessage) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setSaveFeedbackMessage(null);
+      setReviewFeedbackMessage(null);
+    }, 2400);
+
+    return () => clearTimeout(timeout);
+  }, [saveFeedbackMessage, reviewFeedbackMessage]);
+
   if (isLoading) {
     return (
-      <Screen>
-        <View style={styles.body}>
-          <ScreenHeader
-            eyebrow="CityTalk"
-            title="Loading place"
-            description="Fetching the latest place details from Supabase."
-          />
-        </View>
+      <Screen padded={false}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <SkeletonBlock style={styles.heroImage} />
+          <View style={styles.body}>
+            <SkeletonBlock style={styles.skeletonTitle} />
+            <SkeletonBlock style={styles.skeletonBodyLine} />
+            <View style={styles.tagsRow}>
+              <SkeletonBlock style={styles.skeletonChip} />
+              <SkeletonBlock style={styles.skeletonChipWide} />
+            </View>
+            <SkeletonBlock style={styles.skeletonButton} />
+            <Card>
+              <SkeletonBlock style={styles.skeletonSectionTitle} />
+              <SkeletonBlock style={styles.skeletonBodyLine} />
+              <SkeletonBlock style={styles.skeletonBodyLine} />
+              <SkeletonBlock style={styles.skeletonBodyLineShort} />
+            </Card>
+            <Card>
+              <SkeletonBlock style={styles.skeletonSectionTitle} />
+              <SkeletonBlock style={styles.skeletonBodyLineShort} />
+            </Card>
+          </View>
+        </ScrollView>
       </Screen>
     );
   }
@@ -127,6 +160,12 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             title="Could not load place"
             description={errorMessage ?? 'This place is unavailable right now.'}
           />
+          <StateCard
+            title="Place details are unavailable"
+            description="Try loading this place again. If the problem continues, the record may have been removed."
+            actionLabel="Retry"
+            onAction={() => void loadPlace()}
+          />
         </View>
       </Screen>
     );
@@ -138,10 +177,12 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
     try {
       if (saved) {
         await removePlace(place.id);
+        setSaveFeedbackMessage('Removed from saved places.');
         return;
       }
 
       await savePlace(place.id);
+      setSaveFeedbackMessage('Saved for later.');
     } catch {
       // Prompting/error state is handled upstream.
     }
@@ -179,6 +220,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
       setReviews((currentValue) =>
         currentValue.map((review) => (review.id === optimisticReview.id ? createdReview : review)),
       );
+      setReviewFeedbackMessage('Review posted.');
     } catch (error) {
       setReviews((currentValue) =>
         currentValue.filter((review) => review.id !== optimisticReview.id),
@@ -201,6 +243,13 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             title={place.name}
             description={place.shortReview}
           />
+
+          {saveFeedbackMessage ? (
+            <InlineNotice message={saveFeedbackMessage} tone="success" />
+          ) : null}
+          {reviewFeedbackMessage ? (
+            <InlineNotice message={reviewFeedbackMessage} tone="success" />
+          ) : null}
 
           {place.tags.length > 0 ? (
             <View style={styles.tagsRow}>
@@ -247,11 +296,12 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
               />
 
               {reviewErrorMessage ? (
-                <Text style={styles.errorText}>{reviewErrorMessage}</Text>
+                <InlineNotice message={reviewErrorMessage} tone="error" />
               ) : null}
 
               <Button
                 variant={isAuthenticated ? 'primary' : 'secondary'}
+                disabled={isSubmittingReview}
                 onPress={() => void handleSubmitReview()}
               >
                 {isSubmittingReview
@@ -262,9 +312,24 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
               </Button>
             </View>
 
-            {isLoadingReviews ? <Text style={styles.bodyText}>Loading reviews…</Text> : null}
+            {isLoadingReviews ? (
+              <View style={styles.reviewLoadingBlock}>
+                <SkeletonBlock style={styles.skeletonBodyLine} />
+                <SkeletonBlock style={styles.skeletonBodyLineShort} />
+                <SkeletonBlock style={styles.skeletonBodyLine} />
+              </View>
+            ) : null}
 
-            {!isLoadingReviews && reviews.length === 0 ? (
+            {!isLoadingReviews && reviewErrorMessage && reviews.length === 0 ? (
+              <StateCard
+                title="Reviews could not load"
+                description="Try fetching reviews again."
+                actionLabel="Retry reviews"
+                onAction={() => void loadReviews()}
+              />
+            ) : null}
+
+            {!isLoadingReviews && !reviewErrorMessage && reviews.length === 0 ? (
               <Text style={styles.bodyText}>
                 No reviews yet. Be the first to leave a quick note.
               </Text>
@@ -303,6 +368,34 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
+  skeletonChip: {
+    height: 32,
+    width: 86,
+  },
+  skeletonChipWide: {
+    height: 32,
+    width: 132,
+  },
+  skeletonTitle: {
+    height: 34,
+    width: '72%',
+  },
+  skeletonSectionTitle: {
+    height: 24,
+    width: '38%',
+  },
+  skeletonBodyLine: {
+    height: 18,
+    width: '100%',
+  },
+  skeletonBodyLineShort: {
+    height: 18,
+    width: '64%',
+  },
+  skeletonButton: {
+    height: 52,
+    width: '100%',
+  },
   sectionTitle: {
     color: colors.text,
     fontSize: typography.sizes.titleSm,
@@ -338,6 +431,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
+  reviewLoadingBlock: {
+    gap: spacing.sm,
+  },
   reviewItem: {
     borderTopColor: colors.border,
     borderTopWidth: 1,
@@ -360,11 +456,6 @@ const styles = StyleSheet.create({
   },
   reviewBody: {
     color: colors.textMuted,
-    fontSize: typography.sizes.bodySm,
-    lineHeight: typography.lineHeights.body,
-  },
-  errorText: {
-    color: colors.danger,
     fontSize: typography.sizes.bodySm,
     lineHeight: typography.lineHeights.body,
   },

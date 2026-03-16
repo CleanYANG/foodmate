@@ -3,9 +3,12 @@ import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { Button } from '../components/Button';
+import { InlineNotice } from '../components/InlineNotice';
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { SkeletonBlock } from '../components/SkeletonBlock';
+import { StateCard } from '../components/StateCard';
 import { Tag } from '../components/Tag';
 import { formatTagLabel } from '../lib/placeTags';
 import type { RootStackParamList } from '../navigation/types';
@@ -32,24 +35,35 @@ export function SavedPlacesScreen({ navigation }: Props) {
   const [places, setPlaces] = useState<Place[]>([]);
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
   const [placesError, setPlacesError] = useState<string | null>(null);
-  const { savedPlaceIds, removePlace, isLoading, errorMessage } = useSavedPlaces();
+  const [saveFeedbackMessage, setSaveFeedbackMessage] = useState<string | null>(null);
+  const { savedPlaceIds, removePlace, isLoading, errorMessage, refreshSavedPlaces } =
+    useSavedPlaces();
+
+  const loadPlaces = async () => {
+    setIsLoadingPlaces(true);
+    setPlacesError(null);
+
+    try {
+      setPlaces(await fetchPlaces());
+    } catch (error) {
+      setPlacesError(toErrorMessage(error));
+    } finally {
+      setIsLoadingPlaces(false);
+    }
+  };
 
   useEffect(() => {
-    const loadPlaces = async () => {
-      setIsLoadingPlaces(true);
-      setPlacesError(null);
-
-      try {
-        setPlaces(await fetchPlaces());
-      } catch (error) {
-        setPlacesError(toErrorMessage(error));
-      } finally {
-        setIsLoadingPlaces(false);
-      }
-    };
-
     void loadPlaces();
   }, []);
+
+  useEffect(() => {
+    if (!saveFeedbackMessage) {
+      return;
+    }
+
+    const timeout = setTimeout(() => setSaveFeedbackMessage(null), 2400);
+    return () => clearTimeout(timeout);
+  }, [saveFeedbackMessage]);
 
   const savedPlaces = useMemo(
     () => places.filter((place) => savedPlaceIds.includes(place.id)),
@@ -91,32 +105,39 @@ export function SavedPlacesScreen({ navigation }: Props) {
           />
         </View>
 
-        {errorMessage ? (
-          <Card>
-            <Text style={styles.emptyText}>{errorMessage}</Text>
-          </Card>
-        ) : null}
+        {saveFeedbackMessage ? <InlineNotice message={saveFeedbackMessage} tone="success" /> : null}
+        {errorMessage ? <InlineNotice message={errorMessage} tone="error" /> : null}
 
         {placesError ? (
-          <Card>
-            <Text style={styles.emptyText}>{placesError}</Text>
-          </Card>
+          <StateCard
+            title="Could not load saved place details"
+            description={placesError}
+            actionLabel="Retry"
+            onAction={() => void loadPlaces()}
+          />
         ) : null}
 
         {isLoading || isLoadingPlaces ? (
           <Card>
             <Text style={styles.emptyTitle}>Loading saved places</Text>
             <Text style={styles.emptyText}>Syncing your saved list and place details.</Text>
+            <SkeletonBlock style={styles.loadingImage} />
+            <SkeletonBlock style={styles.skeletonTitle} />
+            <SkeletonBlock style={styles.skeletonBodyLine} />
+            <View style={styles.tagsRow}>
+              <SkeletonBlock style={styles.skeletonChip} />
+              <SkeletonBlock style={styles.skeletonChipWide} />
+            </View>
           </Card>
         ) : null}
 
         {!isLoading && !isLoadingPlaces && savedPlaces.length === 0 ? (
-          <Card>
-            <Text style={styles.emptyTitle}>Nothing saved yet</Text>
-            <Text style={styles.emptyText}>
-              Swipe right on the Home screen to keep places here for later.
-            </Text>
-          </Card>
+          <StateCard
+            title="Nothing saved yet"
+            description="Swipe right on the Home screen to keep places here for later."
+            actionLabel="Browse places"
+            onAction={() => navigation.navigate('Home')}
+          />
         ) : null}
 
         {savedPlaces.map((place) => (
@@ -148,9 +169,14 @@ export function SavedPlacesScreen({ navigation }: Props) {
                 variant="danger"
                 style={styles.flexButton}
                 onPress={() =>
-                  void removePlace(place.id).catch(() => {
-                    // Prompting/error state is handled upstream.
-                  })
+                  void removePlace(place.id)
+                    .then(() => {
+                      setSaveFeedbackMessage(`${place.name} removed from saved places.`);
+                      return refreshSavedPlaces();
+                    })
+                    .catch(() => {
+                      // Prompting/error state is handled upstream.
+                    })
                 }
               >
                 Remove
@@ -185,6 +211,11 @@ const styles = StyleSheet.create({
   placeCard: {
     padding: spacing.md,
   },
+  loadingImage: {
+    borderRadius: 18,
+    height: 220,
+    width: '100%',
+  },
   placeImage: {
     borderRadius: 18,
     height: 220,
@@ -192,6 +223,22 @@ const styles = StyleSheet.create({
   },
   placeBody: {
     gap: spacing.sm,
+  },
+  skeletonTitle: {
+    height: 28,
+    width: '68%',
+  },
+  skeletonBodyLine: {
+    height: 18,
+    width: '100%',
+  },
+  skeletonChip: {
+    height: 32,
+    width: 86,
+  },
+  skeletonChipWide: {
+    height: 32,
+    width: 124,
   },
   placeTitle: {
     color: colors.text,

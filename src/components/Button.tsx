@@ -9,12 +9,27 @@ type ButtonProps = PropsWithChildren<{
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
+  disabled?: boolean;
 }>;
 
-export function Button({ children, variant = 'primary', onPress, style }: ButtonProps) {
+export function Button({
+  children,
+  variant = 'primary',
+  onPress,
+  style,
+  disabled = false,
+}: ButtonProps) {
   return (
-    <Pressable style={[styles.base, styles[variant], style]} onPress={onPress}>
-      <Text style={[styles.label, styles[`${variant}Label`]]}>{children}</Text>
+    <Pressable
+      disabled={disabled}
+      style={[styles.base, styles[variant], disabled ? styles.disabled : null, style]}
+      onPress={onPress}
+    >
+      <Text
+        style={[styles.label, styles[`${variant}Label`], disabled ? styles.disabledLabel : null]}
+      >
+        {children}
+      </Text>
     </Pressable>
   );
 }
@@ -31,6 +46,9 @@ const styles = StyleSheet.create({
   label: {
     fontSize: typography.sizes.bodySm,
     fontWeight: typography.weights.bold,
+  },
+  disabled: {
+    opacity: 0.55,
   },
   primary: {
     backgroundColor: colors.primary,
@@ -57,5 +75,8 @@ const styles = StyleSheet.create({
   },
   dangerLabel: {
     color: colors.danger,
+  },
+  disabledLabel: {
+    opacity: 0.9,
   },
 });

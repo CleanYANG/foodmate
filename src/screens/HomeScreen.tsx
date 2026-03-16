@@ -13,8 +13,11 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { InlineNotice } from '../components/InlineNotice';
 import { Screen } from '../components/Screen';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { SkeletonBlock } from '../components/SkeletonBlock';
+import { StateCard } from '../components/StateCard';
 import { Tag } from '../components/Tag';
 import { formatTagLabel } from '../lib/placeTags';
 import type { RootStackParamList } from '../navigation/types';
@@ -46,24 +49,25 @@ export function HomeScreen({ navigation }: Props) {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
   const [placesError, setPlacesError] = useState<string | null>(null);
+  const [saveFeedbackMessage, setSaveFeedbackMessage] = useState<string | null>(null);
   const { savePlace, isSaved, errorMessage: savedPlacesError } = useSavedPlaces();
   const pan = useRef(new Animated.ValueXY()).current;
 
+  const loadPlaces = async () => {
+    setIsLoadingPlaces(true);
+    setPlacesError(null);
+
+    try {
+      const nextPlaces = await fetchPlaces();
+      setPlaces(nextPlaces);
+    } catch (error) {
+      setPlacesError(toErrorMessage(error));
+    } finally {
+      setIsLoadingPlaces(false);
+    }
+  };
+
   useEffect(() => {
-    const loadPlaces = async () => {
-      setIsLoadingPlaces(true);
-      setPlacesError(null);
-
-      try {
-        const nextPlaces = await fetchPlaces();
-        setPlaces(nextPlaces);
-      } catch (error) {
-        setPlacesError(toErrorMessage(error));
-      } finally {
-        setIsLoadingPlaces(false);
-      }
-    };
-
     void loadPlaces();
   }, []);
 
@@ -86,6 +90,15 @@ export function HomeScreen({ navigation }: Props) {
     pan.setValue({ x: 0, y: 0 });
   }, [selectedTag, pan]);
 
+  useEffect(() => {
+    if (!saveFeedbackMessage) {
+      return;
+    }
+
+    const timeout = setTimeout(() => setSaveFeedbackMessage(null), 2400);
+    return () => clearTimeout(timeout);
+  }, [saveFeedbackMessage]);
+
   const currentPlace = filteredPlaces[currentIndex];
   const hasMorePlaces = currentIndex < filteredPlaces.length;
   const progress = filteredPlaces.length === 0 ? 0 : currentIndex + 1;
@@ -103,9 +116,13 @@ export function HomeScreen({ navigation }: Props) {
     const activePlace = currentPlace;
 
     if (direction === 'right' && activePlace) {
-      void savePlace(activePlace.id).catch(() => {
-        // Prompting/rollback is handled in context.
-      });
+      void savePlace(activePlace.id)
+        .then(() => {
+          setSaveFeedbackMessage(`${activePlace.name} saved.`);
+        })
+        .catch(() => {
+          // Prompting/rollback is handled in context.
+        });
     }
 
     Animated.timing(pan, {
@@ -171,6 +188,28 @@ export function HomeScreen({ navigation }: Props) {
             title="Loading places"
             description="Pulling the latest deck from Supabase."
           />
+          <Card style={styles.progressCard}>
+            <SkeletonBlock style={styles.skeletonLineShort} />
+            <SkeletonBlock style={styles.skeletonTrack} />
+          </Card>
+          <Card style={styles.loadingDeckCard}>
+            <SkeletonBlock style={styles.loadingHero} />
+            <View style={styles.loadingCardContent}>
+              <View style={styles.topMetaRow}>
+                <SkeletonBlock style={styles.skeletonChip} />
+                <SkeletonBlock style={styles.skeletonChip} />
+              </View>
+              <SkeletonBlock style={styles.skeletonTitle} />
+              <SkeletonBlock style={styles.skeletonBodyLine} />
+              <SkeletonBlock style={styles.skeletonBodyLineShort} />
+              <View style={styles.tagsRow}>
+                <SkeletonBlock style={styles.skeletonChip} />
+                <SkeletonBlock style={styles.skeletonChipWide} />
+                <SkeletonBlock style={styles.skeletonChip} />
+              </View>
+              <SkeletonBlock style={styles.skeletonButton} />
+            </View>
+          </Card>
         </View>
       </Screen>
     );
@@ -185,6 +224,12 @@ export function HomeScreen({ navigation }: Props) {
             title="Could not load places"
             description={placesError}
           />
+          <StateCard
+            title="The place feed didn’t load"
+            description="Check your connection or Supabase config, then try again."
+            actionLabel="Retry"
+            onAction={() => void loadPlaces()}
+          />
         </View>
       </Screen>
     );
@@ -198,6 +243,12 @@ export function HomeScreen({ navigation }: Props) {
             eyebrow="CityTalk"
             title="No places yet"
             description="Your places table is empty right now. Add a few rows in Supabase and this deck will populate automatically."
+          />
+          <StateCard
+            title="Your feed is empty"
+            description="Add the first place from the admin panel, then come back here to swipe through it."
+            actionLabel="Retry"
+            onAction={() => void loadPlaces()}
           />
         </View>
       </Screen>
@@ -314,11 +365,9 @@ export function HomeScreen({ navigation }: Props) {
           ))}
         </ScrollView>
 
-        {savedPlacesError ? (
-          <Card style={styles.noticeCard}>
-            <Text style={styles.noticeText}>{savedPlacesError}</Text>
-          </Card>
-        ) : null}
+        {saveFeedbackMessage ? <InlineNotice message={saveFeedbackMessage} tone="success" /> : null}
+
+        {savedPlacesError ? <InlineNotice message={savedPlacesError} tone="error" /> : null}
 
         <Card style={styles.progressCard}>
           <View style={styles.progressHeader}>
@@ -417,13 +466,50 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingRight: spacing.sm,
   },
-  noticeCard: {
-    padding: spacing.md,
+  loadingDeckCard: {
+    minHeight: 560,
+    overflow: 'hidden',
+    padding: 0,
   },
-  noticeText: {
-    color: colors.textMuted,
-    fontSize: typography.sizes.bodySm,
-    lineHeight: typography.lineHeights.body,
+  loadingHero: {
+    height: 320,
+    width: '100%',
+  },
+  loadingCardContent: {
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  skeletonLineShort: {
+    height: 16,
+    width: '35%',
+  },
+  skeletonTrack: {
+    height: 8,
+    width: '100%',
+  },
+  skeletonChip: {
+    height: 32,
+    width: 86,
+  },
+  skeletonChipWide: {
+    height: 32,
+    width: 124,
+  },
+  skeletonTitle: {
+    height: 36,
+    width: '72%',
+  },
+  skeletonBodyLine: {
+    height: 18,
+    width: '100%',
+  },
+  skeletonBodyLineShort: {
+    height: 18,
+    width: '66%',
+  },
+  skeletonButton: {
+    height: 52,
+    width: '100%',
   },
   progressCard: {
     gap: spacing.sm,
