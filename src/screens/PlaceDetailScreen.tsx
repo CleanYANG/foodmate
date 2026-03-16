@@ -12,6 +12,7 @@ import { StateCard } from '../components/StateCard';
 import { Tag } from '../components/Tag';
 import { formatTagLabel } from '../lib/placeTags';
 import type { RootStackParamList } from '../navigation/types';
+import { openPlaceInMaps } from '../services/mapService';
 import { addPlaceReview, fetchPlaceById, fetchPlaceReviews } from '../services/placeService';
 import { useAuth } from '../store/AuthContext';
 import { useSavedPlaces } from '../store/SavedPlacesContext';
@@ -52,6 +53,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const [reviewErrorMessage, setReviewErrorMessage] = useState<string | null>(null);
   const [saveFeedbackMessage, setSaveFeedbackMessage] = useState<string | null>(null);
   const [reviewFeedbackMessage, setReviewFeedbackMessage] = useState<string | null>(null);
+  const [mapFeedbackMessage, setMapFeedbackMessage] = useState<string | null>(null);
   const { isSaved, savePlace, removePlace, promptSignIn } = useSavedPlaces();
 
   const loadPlace = async () => {
@@ -110,17 +112,18 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   const trimmedReviewText = useMemo(() => reviewText.trim(), [reviewText]);
 
   useEffect(() => {
-    if (!saveFeedbackMessage && !reviewFeedbackMessage) {
+    if (!saveFeedbackMessage && !reviewFeedbackMessage && !mapFeedbackMessage) {
       return;
     }
 
     const timeout = setTimeout(() => {
       setSaveFeedbackMessage(null);
       setReviewFeedbackMessage(null);
+      setMapFeedbackMessage(null);
     }, 2400);
 
     return () => clearTimeout(timeout);
-  }, [saveFeedbackMessage, reviewFeedbackMessage]);
+  }, [saveFeedbackMessage, reviewFeedbackMessage, mapFeedbackMessage]);
 
   if (isLoading) {
     return (
@@ -188,6 +191,15 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
     }
   };
 
+  const handleOpenMaps = async () => {
+    try {
+      await openPlaceInMaps(place);
+      setMapFeedbackMessage('Opening maps…');
+    } catch (error) {
+      setMapFeedbackMessage(toErrorMessage(error));
+    }
+  };
+
   const handleSubmitReview = async () => {
     if (!trimmedReviewText) {
       setReviewErrorMessage('Review text cannot be empty.');
@@ -250,6 +262,12 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           {reviewFeedbackMessage ? (
             <InlineNotice message={reviewFeedbackMessage} tone="success" />
           ) : null}
+          {mapFeedbackMessage ? (
+            <InlineNotice
+              message={mapFeedbackMessage}
+              tone={mapFeedbackMessage === 'Opening maps…' ? 'success' : 'error'}
+            />
+          ) : null}
 
           {place.tags.length > 0 ? (
             <View style={styles.tagsRow}>
@@ -259,9 +277,17 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
             </View>
           ) : null}
 
-          <Button variant={saved ? 'secondary' : 'primary'} onPress={() => void handleSaveToggle()}>
-            {saved ? 'Remove from saved' : 'Save this place'}
-          </Button>
+          <View style={styles.actionButtonsColumn}>
+            <Button
+              variant={saved ? 'secondary' : 'primary'}
+              onPress={() => void handleSaveToggle()}
+            >
+              {saved ? 'Remove from saved' : 'Save this place'}
+            </Button>
+            <Button variant="ghost" onPress={() => void handleOpenMaps()}>
+              Open in maps
+            </Button>
+          </View>
 
           <Card>
             <Text style={styles.sectionTitle}>About this place</Text>
@@ -366,6 +392,9 @@ const styles = StyleSheet.create({
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  actionButtonsColumn: {
     gap: spacing.sm,
   },
   skeletonChip: {
