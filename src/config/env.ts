@@ -1,3 +1,4 @@
+const EXPO_PUBLIC_USE_MOCK_DATA = process.env.EXPO_PUBLIC_USE_MOCK_DATA;
 const EXPO_PUBLIC_SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const EXPO_PUBLIC_SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -10,6 +11,7 @@ if (!EXPO_PUBLIC_SUPABASE_ANON_KEY) {
 }
 
 export const env = {
+  useMockData: EXPO_PUBLIC_USE_MOCK_DATA === 'true',
   supabaseUrl: EXPO_PUBLIC_SUPABASE_URL,
   supabaseAnonKey: EXPO_PUBLIC_SUPABASE_ANON_KEY,
 } as const;

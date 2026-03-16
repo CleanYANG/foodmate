@@ -1,4 +1,6 @@
 import { AuthRequiredError, requireAuthenticatedUserId } from './authService';
+import { mockPlaces } from '../data/mockPlaces';
+import { env } from '../config/env';
 import { derivePlaceTags, sortTags } from '../lib/placeTags';
 import { supabase } from '../lib/supabase';
 import type { Place, PlaceCategory, SavedPlace } from '../types/place';
@@ -135,7 +137,20 @@ function mapReviewRow(reviewRow: ReviewRow): PlaceReview {
   };
 }
 
+function mapMockPlace(place: (typeof mockPlaces)[number]): Place {
+  return {
+    ...place,
+    tags: sortTags(place.tags),
+    city: 'Sapporo',
+    country: 'Japan',
+  };
+}
+
 export async function fetchPlaces(): Promise<Place[]> {
+  if (env.useMockData) {
+    return mockPlaces.map(mapMockPlace);
+  }
+
   const { data, error } = await supabase
     .from('places')
     .select(
@@ -151,6 +166,11 @@ export async function fetchPlaces(): Promise<Place[]> {
 }
 
 export async function fetchPlaceById(placeId: string): Promise<Place | null> {
+  if (env.useMockData) {
+    const place = mockPlaces.find((item) => item.id === placeId);
+    return place ? mapMockPlace(place) : null;
+  }
+
   const { data, error } = await supabase
     .from('places')
     .select(
@@ -167,6 +187,10 @@ export async function fetchPlaceById(placeId: string): Promise<Place | null> {
 }
 
 export async function fetchSavedPlaces(): Promise<SavedPlace[]> {
+  if (env.useMockData) {
+    return [];
+  }
+
   let userId: string;
 
   try {
@@ -198,6 +222,10 @@ export async function fetchSavedPlaces(): Promise<SavedPlace[]> {
 }
 
 export async function fetchPlaceReviews(placeId: string): Promise<PlaceReview[]> {
+  if (env.useMockData) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from('reviews')
     .select('id, place_id, body, created_at, user_id, users(display_name, username)')

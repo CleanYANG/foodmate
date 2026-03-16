@@ -16,6 +16,7 @@ import {
   sendMagicLink,
   signOut as signOutFromService,
 } from '../services/authService';
+import { env } from '../config/env';
 import { supabase } from '../lib/supabase';
 
 type AuthContextValue = {
@@ -46,6 +47,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (env.useMockData) {
+      setSession(null);
+      setUser(null);
+      setAuthError(null);
+      setIsInitializing(false);
+      return;
+    }
+
     let isMounted = true;
 
     const initializeAuth = async () => {
