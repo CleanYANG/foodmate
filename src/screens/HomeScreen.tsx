@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Dimensions, Image, PanResponder, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  Dimensions,
+  Image,
+  PanResponder,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { Button } from '../components/Button';
@@ -7,6 +16,7 @@ import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { Tag } from '../components/Tag';
+import { formatTagLabel } from '../lib/placeTags';
 import type { RootStackParamList } from '../navigation/types';
 import { fetchPlaces } from '../services/placeService';
 import { useSavedPlaces } from '../store/SavedPlacesContext';
@@ -33,6 +43,7 @@ export function HomeScreen({ navigation }: Props) {
   const [places, setPlaces] = useState<Place[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [feedback, setFeedback] = useState<'skip' | 'save' | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
   const [placesError, setPlacesError] = useState<string | null>(null);
   const { savePlace, isSaved, errorMessage: savedPlacesError } = useSavedPlaces();
@@ -56,9 +67,28 @@ export function HomeScreen({ navigation }: Props) {
     void loadPlaces();
   }, []);
 
-  const currentPlace = places[currentIndex];
-  const hasMorePlaces = currentIndex < places.length;
-  const progress = currentIndex + 1;
+  const availableTags = useMemo(
+    () =>
+      [...new Set(places.flatMap((place) => place.tags))].sort((left, right) =>
+        left.localeCompare(right),
+      ),
+    [places],
+  );
+
+  const filteredPlaces = useMemo(
+    () => (selectedTag ? places.filter((place) => place.tags.includes(selectedTag)) : places),
+    [places, selectedTag],
+  );
+
+  useEffect(() => {
+    setCurrentIndex(0);
+    setFeedback(null);
+    pan.setValue({ x: 0, y: 0 });
+  }, [selectedTag, pan]);
+
+  const currentPlace = filteredPlaces[currentIndex];
+  const hasMorePlaces = currentIndex < filteredPlaces.length;
+  const progress = filteredPlaces.length === 0 ? 0 : currentIndex + 1;
 
   const resetCardPosition = () => {
     Animated.spring(pan, {
@@ -174,6 +204,43 @@ export function HomeScreen({ navigation }: Props) {
     );
   }
 
+  if (filteredPlaces.length === 0) {
+    return (
+      <Screen>
+        <View style={styles.container}>
+          <View style={styles.headerRow}>
+            <View style={styles.headerCopy}>
+              <ScreenHeader
+                eyebrow="CityTalk"
+                title="No matches for this tag"
+                description="Try a different tag or clear the filter to see the full place feed again."
+              />
+            </View>
+            <Button variant="secondary" onPress={() => setSelectedTag(null)}>
+              Clear
+            </Button>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterScrollContent}
+          >
+            <Tag label="All" selected={selectedTag === null} onPress={() => setSelectedTag(null)} />
+            {availableTags.map((tag) => (
+              <Tag
+                key={tag}
+                label={formatTagLabel(tag)}
+                selected={selectedTag === tag}
+                onPress={() => setSelectedTag(tag)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      </Screen>
+    );
+  }
+
   if (!hasMorePlaces) {
     return (
       <Screen>
@@ -181,13 +248,17 @@ export function HomeScreen({ navigation }: Props) {
           <ScreenHeader
             eyebrow="CityTalk"
             title="Deck complete"
-            description="You made it through the full set. Restart the deck or jump into your saved places."
+            description={
+              selectedTag
+                ? `You made it through every ${formatTagLabel(selectedTag)} place in this filter.`
+                : 'You made it through the full set. Restart the deck or jump into your saved places.'
+            }
           />
 
           <Card>
             <Text style={styles.emptyTitle}>All places reviewed</Text>
             <Text style={styles.emptyText}>
-              You swiped through {places.length} places in this session.
+              You swiped through {filteredPlaces.length} places in this session.
             </Text>
             <View style={styles.actionRow}>
               <Button
@@ -227,6 +298,22 @@ export function HomeScreen({ navigation }: Props) {
           </Button>
         </View>
 
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterScrollContent}
+        >
+          <Tag label="All" selected={selectedTag === null} onPress={() => setSelectedTag(null)} />
+          {availableTags.map((tag) => (
+            <Tag
+              key={tag}
+              label={formatTagLabel(tag)}
+              selected={selectedTag === tag}
+              onPress={() => setSelectedTag(tag)}
+            />
+          ))}
+        </ScrollView>
+
         {savedPlacesError ? (
           <Card style={styles.noticeCard}>
             <Text style={styles.noticeText}>{savedPlacesError}</Text>
@@ -237,14 +324,16 @@ export function HomeScreen({ navigation }: Props) {
           <View style={styles.progressHeader}>
             <Text style={styles.progressLabel}>Deck progress</Text>
             <Text style={styles.progressValue}>
-              {Math.min(progress, places.length)} / {places.length}
+              {Math.min(progress, filteredPlaces.length)} / {filteredPlaces.length}
             </Text>
           </View>
           <View style={styles.progressTrack}>
             <View
               style={[
                 styles.progressFill,
-                { width: `${(Math.min(progress, places.length) / places.length) * 100}%` },
+                {
+                  width: `${filteredPlaces.length === 0 ? 0 : (Math.min(progress, filteredPlaces.length) / filteredPlaces.length) * 100}%`,
+                },
               ]}
             />
           </View>
@@ -286,7 +375,7 @@ export function HomeScreen({ navigation }: Props) {
               {currentPlace.tags.length > 0 ? (
                 <View style={styles.tagsRow}>
                   {currentPlace.tags.map((tag) => (
-                    <Tag key={tag} label={`#${tag}`} />
+                    <Tag key={tag} label={formatTagLabel(tag)} />
                   ))}
                 </View>
               ) : null}
@@ -323,6 +412,10 @@ const styles = StyleSheet.create({
   },
   headerCopy: {
     flex: 1,
+  },
+  filterScrollContent: {
+    gap: spacing.sm,
+    paddingRight: spacing.sm,
   },
   noticeCard: {
     padding: spacing.md,

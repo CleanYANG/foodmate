@@ -7,6 +7,7 @@ import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { Tag } from '../components/Tag';
+import { formatTagLabel } from '../lib/placeTags';
 import type { RootStackParamList } from '../navigation/types';
 import { fetchPlaces } from '../services/placeService';
 import { useAuth } from '../store/AuthContext';
@@ -126,6 +127,13 @@ export function SavedPlacesScreen({ navigation }: Props) {
               <Tag label={place.category} tone="primary" />
               <Text style={styles.placeTitle}>{place.name}</Text>
               <Text style={styles.placeReview}>{place.shortReview}</Text>
+              {place.tags.length > 0 ? (
+                <View style={styles.tagsRow}>
+                  {place.tags.map((tag) => (
+                    <Tag key={tag} label={formatTagLabel(tag)} />
+                  ))}
+                </View>
+              ) : null}
             </View>
 
             <View style={styles.actionsRow}>
@@ -195,6 +203,11 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: typography.sizes.bodySm,
     lineHeight: 22,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
   },
   actionsRow: {
     flexDirection: 'row',

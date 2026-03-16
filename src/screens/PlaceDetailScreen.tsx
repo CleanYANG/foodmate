@@ -7,6 +7,7 @@ import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { Tag } from '../components/Tag';
+import { formatTagLabel } from '../lib/placeTags';
 import type { RootStackParamList } from '../navigation/types';
 import { addPlaceReview, fetchPlaceById, fetchPlaceReviews } from '../services/placeService';
 import { useAuth } from '../store/AuthContext';
@@ -204,7 +205,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
           {place.tags.length > 0 ? (
             <View style={styles.tagsRow}>
               {place.tags.map((tag) => (
-                <Tag key={tag} label={`#${tag}`} />
+                <Tag key={tag} label={formatTagLabel(tag)} />
               ))}
             </View>
           ) : null}

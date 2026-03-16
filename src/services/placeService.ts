@@ -1,4 +1,5 @@
 import { AuthRequiredError, requireAuthenticatedUserId } from './authService';
+import { derivePlaceTags, sortTags } from '../lib/placeTags';
 import { supabase } from '../lib/supabase';
 import type { Place, PlaceCategory, SavedPlace } from '../types/place';
 import type { PlaceReview } from '../types/review';
@@ -114,6 +115,7 @@ function mapPlaceRow(placeRow: PlaceRow): Place {
   };
 
   place.category = inferCategory(place);
+  place.tags = sortTags(derivePlaceTags(place));
 
   return place;
 }
