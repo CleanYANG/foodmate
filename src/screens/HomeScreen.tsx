@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
-  Dimensions,
   Image,
   PanResponder,
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
@@ -30,10 +31,6 @@ import type { Place } from '../types/place';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.22;
-const SWIPE_OUT_DISTANCE = SCREEN_WIDTH * 1.2;
-
 function toErrorMessage(error: unknown) {
   if (error instanceof Error) {
     return error.message;
@@ -52,6 +49,24 @@ export function HomeScreen({ navigation }: Props) {
   const [saveFeedbackMessage, setSaveFeedbackMessage] = useState<string | null>(null);
   const { savePlace, isSaved, errorMessage: savedPlacesError } = useSavedPlaces();
   const pan = useRef(new Animated.ValueXY()).current;
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
+  const screenWidth = Math.max(windowWidth, 320);
+  const isCompactWidth = screenWidth < 390;
+  const isShortScreen = windowHeight < 760;
+  const isVeryShortScreen = windowHeight < 700;
+  const swipeThreshold = screenWidth * 0.22;
+  const swipeOutDistance = screenWidth * 1.2;
+  const heroCardHeight = Math.min(
+    Math.max(windowHeight * (isVeryShortScreen ? 0.44 : 0.5), 380),
+    620,
+  );
+  const cardPadding = isCompactWidth || isShortScreen ? spacing.lg : spacing.xl;
+  const headerGap = isShortScreen ? spacing.xs : spacing.sm;
+  const layoutGap = isShortScreen ? spacing.md : spacing.lg;
+  const reviewLines = isVeryShortScreen ? 2 : isShortScreen ? 3 : 4;
+  const titleLines = isCompactWidth ? 2 : 3;
 
   const loadPlaces = async () => {
     setIsLoadingPlaces(true);
@@ -127,7 +142,7 @@ export function HomeScreen({ navigation }: Props) {
 
     Animated.timing(pan, {
       toValue: {
-        x: direction === 'right' ? SWIPE_OUT_DISTANCE : -SWIPE_OUT_DISTANCE,
+        x: direction === 'right' ? swipeOutDistance : -swipeOutDistance,
         y: 20,
       },
       duration: 220,
@@ -156,12 +171,12 @@ export function HomeScreen({ navigation }: Props) {
           }
         },
         onPanResponderRelease: (_, gestureState) => {
-          if (gestureState.dx > SWIPE_THRESHOLD) {
+          if (gestureState.dx > swipeThreshold) {
             advanceCard('right');
             return;
           }
 
-          if (gestureState.dx < -SWIPE_THRESHOLD) {
+          if (gestureState.dx < -swipeThreshold) {
             advanceCard('left');
             return;
           }
@@ -170,25 +185,33 @@ export function HomeScreen({ navigation }: Props) {
         },
         onPanResponderTerminate: resetCardPosition,
       }),
-    [pan, currentPlace, savePlace],
+    [pan, currentPlace, savePlace, swipeThreshold, swipeOutDistance],
   );
 
   const rotate = pan.x.interpolate({
-    inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
+    inputRange: [-screenWidth, 0, screenWidth],
     outputRange: ['-7deg', '0deg', '7deg'],
     extrapolate: 'clamp',
   });
 
   const cardScale = pan.x.interpolate({
-    inputRange: [-SCREEN_WIDTH, 0, SCREEN_WIDTH],
+    inputRange: [-screenWidth, 0, screenWidth],
     outputRange: [0.985, 1, 0.985],
     extrapolate: 'clamp',
   });
 
+  const contentBottomPadding = Math.max(insets.bottom, spacing.sm) + spacing.md;
+
   if (isLoadingPlaces) {
     return (
       <Screen>
-        <View style={styles.container}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { gap: layoutGap, paddingBottom: contentBottomPadding },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
           <ScreenHeader
             eyebrow="CityTalk"
             title="Loading places"
@@ -198,9 +221,9 @@ export function HomeScreen({ navigation }: Props) {
             <SkeletonBlock style={styles.skeletonLineShort} />
             <SkeletonBlock style={styles.skeletonTrack} />
           </Card>
-          <Card style={styles.loadingDeckCard}>
-            <SkeletonBlock style={styles.loadingHero} />
-            <View style={styles.loadingCardContent}>
+          <Card style={[styles.loadingDeckCard, { minHeight: heroCardHeight }]}>
+            <SkeletonBlock style={[styles.loadingHero, { height: heroCardHeight * 0.56 }]} />
+            <View style={[styles.loadingCardContent, { padding: cardPadding }]}>
               <View style={styles.topMetaRow}>
                 <SkeletonBlock style={styles.skeletonChip} />
                 <SkeletonBlock style={styles.skeletonChip} />
@@ -216,7 +239,7 @@ export function HomeScreen({ navigation }: Props) {
               <SkeletonBlock style={styles.skeletonButton} />
             </View>
           </Card>
-        </View>
+        </ScrollView>
       </Screen>
     );
   }
@@ -224,7 +247,7 @@ export function HomeScreen({ navigation }: Props) {
   if (placesError) {
     return (
       <Screen>
-        <View style={styles.container}>
+        <View style={[styles.container, { gap: layoutGap }]}>
           <ScreenHeader
             eyebrow="CityTalk"
             title="Could not load places"
@@ -244,7 +267,7 @@ export function HomeScreen({ navigation }: Props) {
   if (places.length === 0) {
     return (
       <Screen>
-        <View style={styles.container}>
+        <View style={[styles.container, { gap: layoutGap }]}>
           <ScreenHeader
             eyebrow="CityTalk"
             title="No places yet"
@@ -264,7 +287,7 @@ export function HomeScreen({ navigation }: Props) {
   if (filteredPlaces.length === 0) {
     return (
       <Screen>
-        <View style={styles.container}>
+        <View style={[styles.container, { gap: layoutGap }]}>
           <View style={styles.headerRow}>
             <View style={styles.headerCopy}>
               <ScreenHeader
@@ -301,7 +324,7 @@ export function HomeScreen({ navigation }: Props) {
   if (!hasMorePlaces) {
     return (
       <Screen>
-        <View style={styles.container}>
+        <View style={[styles.container, { gap: layoutGap }]}>
           <ScreenHeader
             eyebrow="CityTalk"
             title="Deck complete"
@@ -341,7 +364,14 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <Screen>
-      <View style={styles.container}>
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { gap: layoutGap, paddingBottom: contentBottomPadding },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.headerRow}>
           <View style={styles.headerCopy}>
             <ScreenHeader
@@ -394,11 +424,12 @@ export function HomeScreen({ navigation }: Props) {
           </View>
         </Card>
 
-        <View style={styles.deckArea}>
+        <View style={[styles.deckArea, { minHeight: heroCardHeight }]}>
           <Animated.View
             style={[
               styles.swipeCard,
               {
+                minHeight: heroCardHeight,
                 transform: [...pan.getTranslateTransform(), { rotate }, { scale: cardScale }],
               },
             ]}
@@ -418,14 +449,25 @@ export function HomeScreen({ navigation }: Props) {
               </View>
             ) : null}
 
-            <View style={styles.cardContent}>
+            <View style={[styles.cardContent, { padding: cardPadding, gap: headerGap }]}>
               <View style={styles.topMetaRow}>
                 <Tag label={currentPlace.category} tone="primary" />
                 {isSaved(currentPlace.id) ? <Tag label="saved" /> : null}
               </View>
 
-              <Text style={styles.placeTitle}>{currentPlace.name}</Text>
-              <Text style={styles.placeReview}>{currentPlace.shortReview}</Text>
+              <Text
+                style={[
+                  styles.placeTitle,
+                  isCompactWidth ? styles.placeTitleCompact : null,
+                  isVeryShortScreen ? styles.placeTitleShortScreen : null,
+                ]}
+                numberOfLines={titleLines}
+              >
+                {currentPlace.name}
+              </Text>
+              <Text style={styles.placeReview} numberOfLines={reviewLines}>
+                {currentPlace.shortReview}
+              </Text>
 
               {currentPlace.tags.length > 0 ? (
                 <View style={styles.tagsRow}>
@@ -449,12 +491,18 @@ export function HomeScreen({ navigation }: Props) {
           <Text style={styles.hintText}>← Skip</Text>
           <Text style={styles.hintText}>Save →</Text>
         </View>
-      </View>
+      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
     gap: spacing.lg,
@@ -462,7 +510,7 @@ const styles = StyleSheet.create({
   headerRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: spacing.md,
+    gap: spacing.sm,
     justifyContent: 'space-between',
   },
   headerCopy: {
@@ -470,21 +518,18 @@ const styles = StyleSheet.create({
   },
   filterScrollContent: {
     gap: spacing.sm,
-    paddingRight: spacing.sm,
     paddingBottom: spacing.xs,
+    paddingRight: spacing.sm,
   },
   loadingDeckCard: {
-    minHeight: 560,
     overflow: 'hidden',
     padding: 0,
   },
   loadingHero: {
-    height: 320,
     width: '100%',
   },
   loadingCardContent: {
     gap: spacing.md,
-    padding: spacing.lg,
   },
   skeletonLineShort: {
     height: 16,
@@ -519,9 +564,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   progressCard: {
+    borderRadius: 22,
     gap: spacing.sm,
     padding: spacing.md,
-    borderRadius: 22,
   },
   progressHeader: {
     alignItems: 'center',
@@ -550,15 +595,13 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   deckArea: {
-    flex: 1,
-    minHeight: 580,
+    flexShrink: 1,
   },
   swipeCard: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
     borderRadius: 32,
     borderWidth: 1,
-    flex: 1,
     overflow: 'hidden',
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 18 },
@@ -567,9 +610,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   heroImage: {
-    height: '100%',
-    position: 'absolute',
-    width: '100%',
+    ...StyleSheet.absoluteFillObject,
   },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -599,8 +640,6 @@ const styles = StyleSheet.create({
   cardContent: {
     flex: 1,
     justifyContent: 'flex-end',
-    padding: spacing.xl,
-    gap: spacing.md,
   },
   topMetaRow: {
     alignItems: 'center',
@@ -618,10 +657,18 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 14,
   },
+  placeTitleCompact: {
+    fontSize: typography.sizes.titleMd,
+    lineHeight: typography.lineHeights.title,
+  },
+  placeTitleShortScreen: {
+    fontSize: 28,
+    lineHeight: 34,
+  },
   placeReview: {
     color: 'rgba(255,255,255,0.94)',
     fontSize: typography.sizes.body,
-    lineHeight: typography.lineHeights.relaxed,
+    lineHeight: typography.lineHeights.body,
   },
   tagsRow: {
     flexDirection: 'row',
