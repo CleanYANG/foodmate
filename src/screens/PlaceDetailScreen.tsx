@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import { formatCategoryLabel } from '../config/discoveryRail';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { InlineNotice } from '../components/InlineNotice';
@@ -253,7 +254,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
         <View style={styles.body}>
           <View style={styles.headerCard}>
             <ScreenHeader
-              eyebrow={place.category}
+              eyebrow={formatCategoryLabel(place.category)}
               title={place.name}
               description={place.shortReview}
             />

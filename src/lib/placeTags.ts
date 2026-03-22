@@ -1,13 +1,11 @@
 import type { Place, PlaceCategory } from '../types/place';
 
 const CATEGORY_TAG_MAP: Record<Exclude<PlaceCategory, 'place'>, string[]> = {
+  restaurant: ['restaurant'],
   cafe: ['cafe'],
   bar: ['night'],
   market: ['tourist-friendly'],
-  'local food': ['cheap', 'local favorite'],
-  'date spot': ['date spot'],
   'hidden gem': ['hidden gem'],
-  sightseeing: ['tourist-friendly'],
 };
 
 const TAG_RULES: Array<{ tag: string; keywords: string[] }> = [
@@ -52,6 +50,10 @@ const TAG_RULES: Array<{ tag: string; keywords: string[] }> = [
   {
     tag: 'local favorite',
     keywords: ['locals', 'local', 'regulars', 'neighborhood', 'classic', 'specialty'],
+  },
+  {
+    tag: 'restaurant',
+    keywords: ['restaurant', 'dining', 'ramen', 'soup curry', 'jingisukan', 'shokudo'],
   },
 ];
 

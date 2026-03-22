@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
+import { formatCategoryLabel } from '../config/discoveryRail';
 import { Button } from '../components/Button';
 import { InlineNotice } from '../components/InlineNotice';
 import { Card } from '../components/Card';
@@ -145,7 +146,7 @@ export function SavedPlacesScreen({ navigation }: Props) {
             <Image source={{ uri: place.imageUrl }} style={styles.placeImage} />
 
             <View style={styles.placeBody}>
-              <Tag label={place.category} tone="primary" />
+              <Tag label={formatCategoryLabel(place.category)} tone="primary" />
               <Text style={styles.placeTitle}>{place.name}</Text>
               <Text style={styles.placeReview}>{place.shortReview}</Text>
               {place.tags.length > 0 ? (

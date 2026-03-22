@@ -1,11 +1,4 @@
-export type PlaceCategory =
-  | 'cafe'
-  | 'bar'
-  | 'market'
-  | 'local food'
-  | 'date spot'
-  | 'hidden gem'
-  | 'sightseeing';
+export type PlaceCategory = 'restaurant' | 'cafe' | 'bar' | 'market' | 'hidden gem';
 
 export type MockPlace = {
   id: string;
@@ -18,6 +11,7 @@ export type MockPlace = {
   imageUrl: string;
   tags: string[];
   category: PlaceCategory;
+  collections: string[];
 };
 
 export const mockPlaces: MockPlace[] = [
@@ -34,6 +28,7 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Snow+Lantern+Coffee',
     tags: ['cozy', 'quiet', 'coffee', 'winter view'],
     category: 'cafe',
+    collections: ['not on earth'],
   },
   {
     id: 'place-002',
@@ -48,6 +43,7 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=North+Alley+Highball',
     tags: ['nightlife', 'highball', 'locals', 'small bar'],
     category: 'bar',
+    collections: ['on mars'],
   },
   {
     id: 'place-003',
@@ -62,6 +58,7 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Sora+Street+Market+Hall',
     tags: ['seafood', 'market stroll', 'casual', 'local produce'],
     category: 'market',
+    collections: ['on mars'],
   },
   {
     id: 'place-004',
@@ -75,7 +72,8 @@ export const mockPlaces: MockPlace[] = [
     longitude: 141.3581,
     imageUrl: 'https://placehold.co/800x1200?text=Miso+Corner+Shokudo',
     tags: ['ramen', 'comfort food', 'quick meal', 'local classic'],
-    category: 'local food',
+    category: 'restaurant',
+    collections: ['not on earth'],
   },
   {
     id: 'place-005',
@@ -89,7 +87,8 @@ export const mockPlaces: MockPlace[] = [
     longitude: 141.3475,
     imageUrl: 'https://placehold.co/800x1200?text=Moondrop+Terrace',
     tags: ['romantic', 'city view', 'dinner', 'stylish'],
-    category: 'date spot',
+    category: 'restaurant',
+    collections: ['not on earth'],
   },
   {
     id: 'place-006',
@@ -104,6 +103,7 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Maple+Lane+Bakehouse',
     tags: ['pastries', 'neighborhood', 'hidden spot', 'morning'],
     category: 'hidden gem',
+    collections: ['not on earth'],
   },
   {
     id: 'place-007',
@@ -117,7 +117,8 @@ export const mockPlaces: MockPlace[] = [
     longitude: 141.3534,
     imageUrl: 'https://placehold.co/800x1200?text=Clock+Tower+Garden+Walk',
     tags: ['iconic', 'photos', 'walking route', 'central'],
-    category: 'sightseeing',
+    category: 'hidden gem',
+    collections: ['on mars'],
   },
   {
     id: 'place-008',
@@ -132,6 +133,7 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=River+Snow+Espresso',
     tags: ['modern', 'espresso', 'riverside', 'minimal'],
     category: 'cafe',
+    collections: ['on mars'],
   },
   {
     id: 'place-009',
@@ -146,6 +148,7 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Lantern+Fox+Izakaya',
     tags: ['izakaya', 'shared plates', 'charcoal grill', 'energetic'],
     category: 'bar',
+    collections: ['not on earth'],
   },
   {
     id: 'place-010',
@@ -160,6 +163,7 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Hokkaido+Pantry+Lane',
     tags: ['souvenirs', 'snacks', 'regional foods', 'easy shopping'],
     category: 'market',
+    collections: ['not on earth'],
   },
   {
     id: 'place-011',
@@ -173,7 +177,8 @@ export const mockPlaces: MockPlace[] = [
     longitude: 141.3645,
     imageUrl: 'https://placehold.co/800x1200?text=Steam+Pot+Soup+Curry',
     tags: ['soup curry', 'spicy', 'vegetables', 'local favorite'],
-    category: 'local food',
+    category: 'restaurant',
+    collections: ['on mars'],
   },
   {
     id: 'place-012',
@@ -187,7 +192,8 @@ export const mockPlaces: MockPlace[] = [
     longitude: 141.3446,
     imageUrl: 'https://placehold.co/800x1200?text=Aurora+Window+Dining',
     tags: ['date night', 'quiet', 'views', 'modern dining'],
-    category: 'date spot',
+    category: 'restaurant',
+    collections: ['on mars'],
   },
   {
     id: 'place-013',
@@ -202,6 +208,7 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Birch+Path+Tea+Room',
     tags: ['tea', 'desserts', 'quiet escape', 'second floor'],
     category: 'hidden gem',
+    collections: ['not on earth'],
   },
   {
     id: 'place-014',
@@ -215,7 +222,8 @@ export const mockPlaces: MockPlace[] = [
     longitude: 141.3212,
     imageUrl: 'https://placehold.co/800x1200?text=Hillview+Observation+Deck',
     tags: ['sunset', 'panoramic', 'photos', 'viewpoint'],
-    category: 'sightseeing',
+    category: 'hidden gem',
+    collections: ['on mars'],
   },
   {
     id: 'place-015',
@@ -230,6 +238,7 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Spruce+%26+Stone+Cafe',
     tags: ['cheesecake', 'design', 'coffee break', 'comfortable'],
     category: 'cafe',
+    collections: ['not on earth'],
   },
   {
     id: 'place-016',
@@ -244,6 +253,7 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Velvet+Snow+Cocktail+Room',
     tags: ['cocktails', 'intimate', 'stylish', 'evening'],
     category: 'bar',
+    collections: ['on mars'],
   },
   {
     id: 'place-017',
@@ -258,6 +268,7 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Morning+Crab+Arcade',
     tags: ['seafood', 'morning', 'food crawl', 'busy'],
     category: 'market',
+    collections: ['on mars'],
   },
   {
     id: 'place-018',
@@ -271,7 +282,8 @@ export const mockPlaces: MockPlace[] = [
     longitude: 141.3419,
     imageUrl: 'https://placehold.co/800x1200?text=Charcoal+Alley+Jingisukan',
     tags: ['jingisukan', 'grill', 'group dinner', 'local specialty'],
-    category: 'local food',
+    category: 'restaurant',
+    collections: ['not on earth'],
   },
   {
     id: 'place-019',
@@ -286,6 +298,7 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Secret+Garden+Footpath',
     tags: ['quiet walk', 'greenery', 'romantic', 'detour'],
     category: 'hidden gem',
+    collections: ['on mars'],
   },
   {
     id: 'place-020',
@@ -299,6 +312,7 @@ export const mockPlaces: MockPlace[] = [
     longitude: 141.3412,
     imageUrl: 'https://placehold.co/800x1200?text=Snowcap+Park+Lookout',
     tags: ['park', 'view', 'family friendly', 'open air'],
-    category: 'sightseeing',
+    category: 'hidden gem',
+    collections: ['not on earth'],
   },
 ];

@@ -17,6 +17,8 @@ type PlaceRow = {
   image_url: string | null;
   city: string | null;
   country: string | null;
+  category?: string | null;
+  collections?: string[] | null;
 };
 
 type SavedPlaceRow = {
@@ -68,36 +70,44 @@ function inferCategory(place: Pick<Place, 'tags' | 'name'>): PlaceCategory {
 
   if (
     normalized.includes('ramen') ||
+    normalized.includes('restaurant') ||
+    normalized.includes('dining') ||
     normalized.includes('soup curry') ||
     normalized.includes('jingisukan') ||
     normalized.includes('food')
   ) {
-    return 'local food';
-  }
-
-  if (normalized.includes('date') || normalized.includes('romantic')) {
-    return 'date spot';
+    return 'restaurant';
   }
 
   if (
     normalized.includes('hidden') ||
     normalized.includes('quiet escape') ||
-    normalized.includes('tea room')
+    normalized.includes('tea room') ||
+    normalized.includes('view') ||
+    normalized.includes('lookout') ||
+    normalized.includes('observation') ||
+    normalized.includes('park')
   ) {
     return 'hidden gem';
   }
 
+  return 'place';
+}
+
+function inferCollections(place: Pick<Place, 'tags' | 'name'>): string[] {
+  const normalized = [...place.tags, place.name].join(' ').toLowerCase();
+
   if (
-    normalized.includes('view') ||
-    normalized.includes('lookout') ||
-    normalized.includes('observation') ||
-    normalized.includes('sightseeing') ||
-    normalized.includes('park')
+    normalized.includes('mars') ||
+    normalized.includes('space') ||
+    normalized.includes('future') ||
+    normalized.includes('modern') ||
+    normalized.includes('minimal')
   ) {
-    return 'sightseeing';
+    return ['on mars'];
   }
 
-  return 'place';
+  return ['not on earth'];
 }
 
 function mapPlaceRow(placeRow: PlaceRow): Place {
@@ -112,12 +122,23 @@ function mapPlaceRow(placeRow: PlaceRow): Place {
     imageUrl: placeRow.image_url ?? 'https://placehold.co/800x1200?text=CityTalk+Place',
     tags: [],
     category: 'place',
+    collections: [],
     city: placeRow.city,
     country: placeRow.country,
   };
 
-  place.category = inferCategory(place);
   place.tags = sortTags(derivePlaceTags(place));
+  place.category =
+    placeRow.category === 'restaurant' ||
+    placeRow.category === 'cafe' ||
+    placeRow.category === 'bar' ||
+    placeRow.category === 'market' ||
+    placeRow.category === 'hidden gem'
+      ? placeRow.category
+      : inferCategory(place);
+  place.collections = (placeRow.collections ?? inferCollections(place)).map((collection) =>
+    collection.toLowerCase(),
+  );
 
   return place;
 }
@@ -141,6 +162,7 @@ function mapMockPlace(place: (typeof mockPlaces)[number]): Place {
   return {
     ...place,
     tags: sortTags(place.tags),
+    collections: place.collections.map((collection) => collection.toLowerCase()),
     city: 'Sapporo',
     country: 'Japan',
   };
@@ -154,7 +176,7 @@ export async function fetchPlaces(): Promise<Place[]> {
   const { data, error } = await supabase
     .from('places')
     .select(
-      'id, name, short_review, full_description, address, latitude, longitude, image_url, city, country',
+      'id, name, short_review, full_description, address, latitude, longitude, image_url, city, country, category, collections',
     )
     .order('created_at', { ascending: false });
 
@@ -174,7 +196,7 @@ export async function fetchPlaceById(placeId: string): Promise<Place | null> {
   const { data, error } = await supabase
     .from('places')
     .select(
-      'id, name, short_review, full_description, address, latitude, longitude, image_url, city, country',
+      'id, name, short_review, full_description, address, latitude, longitude, image_url, city, country, category, collections',
     )
     .eq('id', placeId)
     .maybeSingle();
