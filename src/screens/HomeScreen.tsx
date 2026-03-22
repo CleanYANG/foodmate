@@ -47,6 +47,7 @@ export function HomeScreen({ navigation }: Props) {
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
   const [placesError, setPlacesError] = useState<string | null>(null);
   const [saveFeedbackMessage, setSaveFeedbackMessage] = useState<string | null>(null);
+  const [showDiscoveryHint, setShowDiscoveryHint] = useState(false);
   const { savePlace, isSaved, errorMessage: savedPlacesError } = useSavedPlaces();
   const pan = useRef(new Animated.ValueXY()).current;
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -113,6 +114,17 @@ export function HomeScreen({ navigation }: Props) {
     const timeout = setTimeout(() => setSaveFeedbackMessage(null), 2400);
     return () => clearTimeout(timeout);
   }, [saveFeedbackMessage]);
+
+  useEffect(() => {
+    if (isLoadingPlaces || placesError || filteredPlaces.length === 0 || currentIndex !== 0) {
+      setShowDiscoveryHint(false);
+      return;
+    }
+
+    setShowDiscoveryHint(true);
+    const timeout = setTimeout(() => setShowDiscoveryHint(false), 3200);
+    return () => clearTimeout(timeout);
+  }, [currentIndex, filteredPlaces.length, isLoadingPlaces, placesError]);
 
   const currentPlace = filteredPlaces[currentIndex];
   const hasMorePlaces = currentIndex < filteredPlaces.length;
@@ -400,6 +412,10 @@ export function HomeScreen({ navigation }: Props) {
             />
           ))}
         </ScrollView>
+
+        {showDiscoveryHint ? (
+          <InlineNotice message="Swipe left to skip, right to save, or open details when something clicks." />
+        ) : null}
 
         {saveFeedbackMessage ? <InlineNotice message={saveFeedbackMessage} tone="success" /> : null}
 

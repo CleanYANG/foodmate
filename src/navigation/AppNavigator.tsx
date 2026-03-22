@@ -1,7 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { HomeScreen } from '../screens/HomeScreen';
-import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { PlaceDetailScreen } from '../screens/PlaceDetailScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SavedPlacesScreen } from '../screens/SavedPlacesScreen';
@@ -12,17 +11,12 @@ import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-type AppNavigatorProps = {
-  shouldShowOnboarding: boolean;
-  completeOnboarding: () => void;
-};
-
-export function AppNavigator({ shouldShowOnboarding, completeOnboarding }: AppNavigatorProps) {
+export function AppNavigator() {
   const { isInitializing, isAuthenticated } = useAuth();
 
   return (
     <Stack.Navigator
-      initialRouteName={shouldShowOnboarding ? 'Onboarding' : 'Home'}
+      initialRouteName="Home"
       screenOptions={{
         animation: 'slide_from_right',
         animationDuration: 220,
@@ -40,11 +34,6 @@ export function AppNavigator({ shouldShowOnboarding, completeOnboarding }: AppNa
         },
       }}
     >
-      {shouldShowOnboarding ? (
-        <Stack.Screen name="Onboarding" options={{ headerShown: false }}>
-          {(props) => <OnboardingScreen {...props} completeOnboarding={completeOnboarding} />}
-        </Stack.Screen>
-      ) : null}
       <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'CityTalk' }} />
       <Stack.Screen
         name="PlaceDetail"

@@ -1,17 +1,12 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
 import { Tag } from '../components/Tag';
-import type { RootStackParamList } from '../navigation/types';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
-
-type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
 type OnboardingStep = {
   eyebrow: string;
@@ -64,7 +59,7 @@ const STEPS: OnboardingStep[] = [
   },
 ];
 
-type OnboardingScreenProps = Props & {
+type OnboardingScreenProps = {
   completeOnboarding: () => void;
 };
 
