@@ -1,11 +1,9 @@
 import type { Place, PlaceCategory } from '../types/place';
 
-const CATEGORY_TAG_MAP: Record<Exclude<PlaceCategory, 'place'>, string[]> = {
+const CATEGORY_TAG_MAP: Record<Exclude<PlaceCategory, 'place' | 'on_mars'>, string[]> = {
   restaurant: ['restaurant'],
   cafe: ['cafe'],
   bar: ['night'],
-  market: ['tourist-friendly'],
-  'hidden gem': ['hidden gem'],
 };
 
 const TAG_RULES: Array<{ tag: string; keywords: string[] }> = [
@@ -19,7 +17,6 @@ const TAG_RULES: Array<{ tag: string; keywords: string[] }> = [
       'visitors',
       'first-timer',
       'first timers',
-      'sightseeing',
       'central',
       'iconic',
       'souvenir',
@@ -28,11 +25,10 @@ const TAG_RULES: Array<{ tag: string; keywords: string[] }> = [
       'beginner',
     ],
   },
-  { tag: 'hidden gem', keywords: ['hidden', 'tucked away', 'easy to miss', 'secret', 'detour'] },
   { tag: 'date spot', keywords: ['date', 'romantic', 'couples', 'candlelit', 'intimate'] },
   {
     tag: 'cheap',
-    keywords: ['cheap', 'budget', 'casual', 'quick meal', 'market', 'food hall', 'snack', 'snacks'],
+    keywords: ['cheap', 'budget', 'casual', 'quick meal', 'food hall', 'snack', 'snacks'],
   },
   {
     tag: 'night',
@@ -83,7 +79,7 @@ export function derivePlaceTags(
     .join(' ')
     .toLowerCase();
 
-  if (place.category !== 'place') {
+  if (place.category !== 'place' && place.category !== 'on_mars') {
     for (const categoryTag of CATEGORY_TAG_MAP[place.category]) {
       addUnique(tags, categoryTag);
     }

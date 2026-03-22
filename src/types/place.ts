@@ -1,6 +1,4 @@
-export type PlaceCategory = 'restaurant' | 'cafe' | 'bar' | 'market' | 'hidden gem' | 'place';
-
-export type PlaceCollection = 'not on earth' | 'on mars';
+export type PlaceCategory = 'restaurant' | 'cafe' | 'bar' | 'on_mars' | 'place';
 
 export type Place = {
   id: string;
@@ -13,7 +11,6 @@ export type Place = {
   imageUrl: string;
   tags: string[];
   category: PlaceCategory;
-  collections: string[];
   city: string | null;
   country: string | null;
 };

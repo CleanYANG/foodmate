@@ -52,10 +52,9 @@ export function HomeScreen({ navigation }: Props) {
   const [selectedFilter, setSelectedFilter] = useState<DiscoveryFilterId>('all');
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
   const [placesError, setPlacesError] = useState<string | null>(null);
-  const [saveFeedbackMessage, setSaveFeedbackMessage] = useState<string | null>(null);
   const [showDiscoveryHint, setShowDiscoveryHint] = useState(false);
   const [isRailExpanded, setIsRailExpanded] = useState(false);
-  const { savePlace, isSaved, errorMessage: savedPlacesError } = useSavedPlaces();
+  const { isSaved, errorMessage: savedPlacesError } = useSavedPlaces();
   const pan = useRef(new Animated.ValueXY()).current;
   const railWidth = useRef(new Animated.Value(68)).current;
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -110,12 +109,7 @@ export function HomeScreen({ navigation }: Props) {
       return places;
     }
 
-    return places.filter(
-      (place) =>
-        place.category === selectedFilter ||
-        place.collections.includes(selectedFilter) ||
-        place.tags.includes(selectedFilter),
-    );
+    return places.filter((place) => place.category === selectedFilter);
   }, [places, selectedFilter]);
 
   useEffect(() => {
@@ -123,15 +117,6 @@ export function HomeScreen({ navigation }: Props) {
     setFeedback(null);
     pan.setValue({ x: 0, y: 0 });
   }, [selectedFilter, pan]);
-
-  useEffect(() => {
-    if (!saveFeedbackMessage) {
-      return;
-    }
-
-    const timeout = setTimeout(() => setSaveFeedbackMessage(null), 2400);
-    return () => clearTimeout(timeout);
-  }, [saveFeedbackMessage]);
 
   useEffect(() => {
     if (isLoadingPlaces || placesError || filteredPlaces.length === 0 || currentIndex !== 0) {
@@ -158,18 +143,6 @@ export function HomeScreen({ navigation }: Props) {
   };
 
   const advanceCard = (direction: 'left' | 'right') => {
-    const activePlace = currentPlace;
-
-    if (direction === 'right' && activePlace) {
-      void savePlace(activePlace.id)
-        .then(() => {
-          setSaveFeedbackMessage(`${activePlace.name} saved.`);
-        })
-        .catch(() => {
-          // Prompting/rollback is handled in context.
-        });
-    }
-
     Animated.timing(pan, {
       toValue: {
         x: direction === 'right' ? swipeOutDistance : -swipeOutDistance,
@@ -215,7 +188,7 @@ export function HomeScreen({ navigation }: Props) {
         },
         onPanResponderTerminate: resetCardPosition,
       }),
-    [currentPlace, pan, savePlace, swipeOutDistance, swipeThreshold],
+    [pan, swipeOutDistance, swipeThreshold],
   );
 
   const rotate = pan.x.interpolate({
@@ -401,10 +374,9 @@ export function HomeScreen({ navigation }: Props) {
         </View>
 
         {showDiscoveryHint ? (
-          <InlineNotice message="Swipe left to skip, right to save. Tap the left rail to switch categories or collections." />
+          <InlineNotice message="Swipe left or right to move through places. Tap the left rail to switch categories." />
         ) : null}
 
-        {saveFeedbackMessage ? <InlineNotice message={saveFeedbackMessage} tone="success" /> : null}
         {savedPlacesError ? <InlineNotice message={savedPlacesError} tone="error" /> : null}
 
         <View style={styles.discoveryRow}>
@@ -488,9 +460,6 @@ export function HomeScreen({ navigation }: Props) {
                   <View style={styles.topMetaRow}>
                     <Tag label={formatCategoryLabel(currentPlace.category)} tone="primary" />
                     {isSaved(currentPlace.id) ? <Tag label="saved" /> : null}
-                    {currentPlace.collections.slice(0, 1).map((collection) => (
-                      <Tag key={collection} label={formatTagLabel(collection)} />
-                    ))}
                   </View>
 
                   <Text
@@ -509,42 +478,20 @@ export function HomeScreen({ navigation }: Props) {
 
                   {currentPlace.tags.length > 0 ? (
                     <View style={styles.tagsRow}>
-                      {currentPlace.tags.slice(0, isVeryShortScreen ? 2 : 4).map((tag) => (
+                      {currentPlace.tags.slice(0, isVeryShortScreen ? 2 : 3).map((tag) => (
                         <Tag key={tag} label={formatTagLabel(tag)} />
                       ))}
                     </View>
                   ) : null}
 
-                  <View style={styles.cardActions}>
-                    <Button
-                      variant="secondary"
-                      style={styles.flexButton}
-                      onPress={() =>
-                        navigation.navigate('PlaceDetail', { placeId: currentPlace.id })
-                      }
-                    >
-                      Open details
-                    </Button>
-                    <Button
-                      variant="primary"
-                      style={styles.flexButton}
-                      onPress={() => advanceCard('right')}
-                    >
-                      Save
-                    </Button>
-                  </View>
+                  <Button
+                    variant="secondary"
+                    onPress={() => navigation.navigate('PlaceDetail', { placeId: currentPlace.id })}
+                  >
+                    Details
+                  </Button>
                 </View>
               </Animated.View>
-            </View>
-
-            <View style={styles.hintRow}>
-              <Text style={styles.hintText}>← Skip</Text>
-              <Text style={styles.activeFilterText} numberOfLines={1}>
-                {selectedFilter === 'all'
-                  ? 'All places'
-                  : discoveryRailItems.find((item) => item.id === selectedFilter)?.label}
-              </Text>
-              <Text style={styles.hintText}>Save →</Text>
             </View>
           </View>
         </View>
@@ -806,29 +753,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
-  },
-  cardActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  hintRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  hintText: {
-    color: colors.textSoft,
-    fontSize: typography.sizes.bodySm,
-    fontWeight: typography.weights.semibold,
-    letterSpacing: 0.2,
-  },
-  activeFilterText: {
-    color: colors.textMuted,
-    flex: 1,
-    fontSize: typography.sizes.caption,
-    fontWeight: typography.weights.semibold,
-    paddingHorizontal: spacing.sm,
-    textAlign: 'center',
   },
   emptyTitle: {
     color: colors.text,

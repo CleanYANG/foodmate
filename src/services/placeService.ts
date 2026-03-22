@@ -18,7 +18,6 @@ type PlaceRow = {
   city: string | null;
   country: string | null;
   category?: string | null;
-  collections?: string[] | null;
 };
 
 type SavedPlaceRow = {
@@ -48,9 +47,26 @@ function inferCategory(place: Pick<Place, 'tags' | 'name'>): PlaceCategory {
   const normalized = [...place.tags, place.name].join(' ').toLowerCase();
 
   if (
+    normalized.includes('vendor') ||
+    normalized.includes('wagon') ||
+    normalized.includes('truck') ||
+    normalized.includes('cart') ||
+    normalized.includes('pop-up') ||
+    normalized.includes('popup') ||
+    normalized.includes('mobile') ||
+    normalized.includes('street food') ||
+    normalized.includes('street vendor') ||
+    normalized.includes('movable')
+  ) {
+    return 'on_mars';
+  }
+
+  if (
     normalized.includes('cafe') ||
     normalized.includes('coffee') ||
-    normalized.includes('espresso')
+    normalized.includes('espresso') ||
+    normalized.includes('tea room') ||
+    normalized.includes('bakery')
   ) {
     return 'cafe';
   }
@@ -64,50 +80,19 @@ function inferCategory(place: Pick<Place, 'tags' | 'name'>): PlaceCategory {
     return 'bar';
   }
 
-  if (normalized.includes('market')) {
-    return 'market';
-  }
-
   if (
     normalized.includes('ramen') ||
     normalized.includes('restaurant') ||
     normalized.includes('dining') ||
     normalized.includes('soup curry') ||
     normalized.includes('jingisukan') ||
-    normalized.includes('food')
+    normalized.includes('food') ||
+    normalized.includes('shokudo')
   ) {
     return 'restaurant';
   }
 
-  if (
-    normalized.includes('hidden') ||
-    normalized.includes('quiet escape') ||
-    normalized.includes('tea room') ||
-    normalized.includes('view') ||
-    normalized.includes('lookout') ||
-    normalized.includes('observation') ||
-    normalized.includes('park')
-  ) {
-    return 'hidden gem';
-  }
-
   return 'place';
-}
-
-function inferCollections(place: Pick<Place, 'tags' | 'name'>): string[] {
-  const normalized = [...place.tags, place.name].join(' ').toLowerCase();
-
-  if (
-    normalized.includes('mars') ||
-    normalized.includes('space') ||
-    normalized.includes('future') ||
-    normalized.includes('modern') ||
-    normalized.includes('minimal')
-  ) {
-    return ['on mars'];
-  }
-
-  return ['not on earth'];
 }
 
 function mapPlaceRow(placeRow: PlaceRow): Place {
@@ -122,7 +107,6 @@ function mapPlaceRow(placeRow: PlaceRow): Place {
     imageUrl: placeRow.image_url ?? 'https://placehold.co/800x1200?text=CityTalk+Place',
     tags: [],
     category: 'place',
-    collections: [],
     city: placeRow.city,
     country: placeRow.country,
   };
@@ -132,13 +116,9 @@ function mapPlaceRow(placeRow: PlaceRow): Place {
     placeRow.category === 'restaurant' ||
     placeRow.category === 'cafe' ||
     placeRow.category === 'bar' ||
-    placeRow.category === 'market' ||
-    placeRow.category === 'hidden gem'
+    placeRow.category === 'on_mars'
       ? placeRow.category
       : inferCategory(place);
-  place.collections = (placeRow.collections ?? inferCollections(place)).map((collection) =>
-    collection.toLowerCase(),
-  );
 
   return place;
 }
@@ -162,7 +142,6 @@ function mapMockPlace(place: (typeof mockPlaces)[number]): Place {
   return {
     ...place,
     tags: sortTags(place.tags),
-    collections: place.collections.map((collection) => collection.toLowerCase()),
     city: 'Sapporo',
     country: 'Japan',
   };
@@ -176,7 +155,7 @@ export async function fetchPlaces(): Promise<Place[]> {
   const { data, error } = await supabase
     .from('places')
     .select(
-      'id, name, short_review, full_description, address, latitude, longitude, image_url, city, country, category, collections',
+      'id, name, short_review, full_description, address, latitude, longitude, image_url, city, country, category',
     )
     .order('created_at', { ascending: false });
 
@@ -196,7 +175,7 @@ export async function fetchPlaceById(placeId: string): Promise<Place | null> {
   const { data, error } = await supabase
     .from('places')
     .select(
-      'id, name, short_review, full_description, address, latitude, longitude, image_url, city, country, category, collections',
+      'id, name, short_review, full_description, address, latitude, longitude, image_url, city, country, category',
     )
     .eq('id', placeId)
     .maybeSingle();

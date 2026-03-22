@@ -1,4 +1,4 @@
-export type PlaceCategory = 'restaurant' | 'cafe' | 'bar' | 'market' | 'hidden gem';
+export type PlaceCategory = 'restaurant' | 'cafe' | 'bar' | 'on_mars';
 
 export type MockPlace = {
   id: string;
@@ -11,7 +11,6 @@ export type MockPlace = {
   imageUrl: string;
   tags: string[];
   category: PlaceCategory;
-  collections: string[];
 };
 
 export const mockPlaces: MockPlace[] = [
@@ -28,7 +27,6 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Snow+Lantern+Coffee',
     tags: ['cozy', 'quiet', 'coffee', 'winter view'],
     category: 'cafe',
-    collections: ['not on earth'],
   },
   {
     id: 'place-002',
@@ -43,22 +41,20 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=North+Alley+Highball',
     tags: ['nightlife', 'highball', 'locals', 'small bar'],
     category: 'bar',
-    collections: ['on mars'],
   },
   {
     id: 'place-003',
     name: 'Sora Street Market Hall',
     shortReview:
-      'A lively indoor market with seafood bowls, produce stalls, and plenty to snack on while browsing.',
+      'A lively, semi-mobile food hub with seafood bowls, produce stalls, and quick bites worth chasing down.',
     fullDescription:
-      'Sora Street Market Hall offers the kind of easy, visual food discovery that makes a city feel alive. The aisles are packed with regional specialties, quick bites, and vendors who clearly care about what they sell. It is a fun choice for groups who want to sample a little of everything without committing to one restaurant.',
+      'Sora Street Market Hall is set up like a flexible vendor cluster rather than a conventional permanent spot. The mix of pop-up counters, casual browsing, and street-food energy makes it feel lively and easy to explore. It is a fun choice when you want something more spontaneous than a standard sit-down meal.',
     address: '1-7 Kita 11 Jonishi, Chuo-ku, Sapporo',
     latitude: 43.0688,
     longitude: 141.3462,
     imageUrl: 'https://placehold.co/800x1200?text=Sora+Street+Market+Hall',
-    tags: ['seafood', 'market stroll', 'casual', 'local produce'],
-    category: 'market',
-    collections: ['on mars'],
+    tags: ['seafood', 'street food', 'casual', 'local produce'],
+    category: 'on_mars',
   },
   {
     id: 'place-004',
@@ -73,7 +69,6 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Miso+Corner+Shokudo',
     tags: ['ramen', 'comfort food', 'quick meal', 'local classic'],
     category: 'restaurant',
-    collections: ['not on earth'],
   },
   {
     id: 'place-005',
@@ -88,7 +83,6 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Moondrop+Terrace',
     tags: ['romantic', 'city view', 'dinner', 'stylish'],
     category: 'restaurant',
-    collections: ['not on earth'],
   },
   {
     id: 'place-006',
@@ -101,24 +95,22 @@ export const mockPlaces: MockPlace[] = [
     latitude: 43.0555,
     longitude: 141.3148,
     imageUrl: 'https://placehold.co/800x1200?text=Maple+Lane+Bakehouse',
-    tags: ['pastries', 'neighborhood', 'hidden spot', 'morning'],
-    category: 'hidden gem',
-    collections: ['not on earth'],
+    tags: ['pastries', 'neighborhood', 'morning'],
+    category: 'cafe',
   },
   {
     id: 'place-007',
-    name: 'Clock Tower Garden Walk',
+    name: 'Clock Tower Garden Walk Cart',
     shortReview:
-      'A classic sightseeing stop with a calmer surrounding area than expected and nice photo angles nearby.',
+      'A pop-up snack cart near a classic sightseeing area with quick treats and a fun passing crowd.',
     fullDescription:
-      'Clock Tower Garden Walk is a good example of a sightseeing spot that works best when treated as part of a wider stroll. The landmark itself is familiar, but the nearby blocks offer pockets of greenery, benches, and low-key city views. It is a great anchor point if you want an easy, low-stress introduction to central Sapporo.',
+      'Clock Tower Garden Walk Cart works as a lightweight stop when you want something snackable while moving through the city. It changes position and menu often enough to feel flexible, and the casual grab-and-go setup makes it more playful than a fixed location.',
     address: '2-1 Kita 1 Jonishi, Chuo-ku, Sapporo',
     latitude: 43.0621,
     longitude: 141.3534,
-    imageUrl: 'https://placehold.co/800x1200?text=Clock+Tower+Garden+Walk',
-    tags: ['iconic', 'photos', 'walking route', 'central'],
-    category: 'hidden gem',
-    collections: ['on mars'],
+    imageUrl: 'https://placehold.co/800x1200?text=Clock+Tower+Garden+Walk+Cart',
+    tags: ['pop-up', 'photos', 'walking route', 'quick bite'],
+    category: 'on_mars',
   },
   {
     id: 'place-008',
@@ -133,7 +125,6 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=River+Snow+Espresso',
     tags: ['modern', 'espresso', 'riverside', 'minimal'],
     category: 'cafe',
-    collections: ['on mars'],
   },
   {
     id: 'place-009',
@@ -148,22 +139,19 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Lantern+Fox+Izakaya',
     tags: ['izakaya', 'shared plates', 'charcoal grill', 'energetic'],
     category: 'bar',
-    collections: ['not on earth'],
   },
   {
     id: 'place-010',
-    name: 'Hokkaido Pantry Lane',
-    shortReview:
-      'A polished local market with cheese, sweets, and giftable food that does not feel overly touristy.',
+    name: 'Hokkaido Pantry Wagon',
+    shortReview: 'A movable local-food wagon with giftable snacks and a casual drop-in feel.',
     fullDescription:
-      'Hokkaido Pantry Lane is ideal when you want regional food in one easy loop. The selection covers sweet and savory specialties, and there is enough variety to make souvenir shopping actually enjoyable. It feels curated rather than crowded, which makes it especially useful for short-stay visitors.',
+      'Hokkaido Pantry Wagon is more nimble than a full market and more interesting than a fixed kiosk. The selection changes, the format is quick, and it works well for spontaneous grazing or grabbing something regional without committing to a full sit-down stop.',
     address: '1-1 Kita 6 Jonishi, Kita-ku, Sapporo',
     latitude: 43.0681,
     longitude: 141.3506,
-    imageUrl: 'https://placehold.co/800x1200?text=Hokkaido+Pantry+Lane',
-    tags: ['souvenirs', 'snacks', 'regional foods', 'easy shopping'],
-    category: 'market',
-    collections: ['not on earth'],
+    imageUrl: 'https://placehold.co/800x1200?text=Hokkaido+Pantry+Wagon',
+    tags: ['souvenirs', 'snacks', 'street food', 'easy shopping'],
+    category: 'on_mars',
   },
   {
     id: 'place-011',
@@ -178,7 +166,6 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Steam+Pot+Soup+Curry',
     tags: ['soup curry', 'spicy', 'vegetables', 'local favorite'],
     category: 'restaurant',
-    collections: ['on mars'],
   },
   {
     id: 'place-012',
@@ -193,37 +180,32 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Aurora+Window+Dining',
     tags: ['date night', 'quiet', 'views', 'modern dining'],
     category: 'restaurant',
-    collections: ['on mars'],
   },
   {
     id: 'place-013',
     name: 'Birch Path Tea Room',
-    shortReview:
-      'A hidden second-floor tea room with handmade desserts and a wonderfully unhurried pace.',
+    shortReview: 'A calm tea room with handmade desserts and a wonderfully unhurried pace.',
     fullDescription:
-      'Birch Path Tea Room feels like it exists slightly outside the tempo of the city. The menu favors classic tea service, the desserts are delicate without being fussy, and the whole place invites you to slow down. It is a strong choice for travelers who want a break from busy attractions and louder food halls.',
+      'Birch Path Tea Room feels like it exists slightly outside the tempo of the city. The menu favors classic tea service, the desserts are delicate without being fussy, and the whole place invites you to slow down. It is a strong choice for travelers who want a quieter café-style break.',
     address: '5-9-7 Minami 3 Jonishi, Chuo-ku, Sapporo',
     latitude: 43.0566,
     longitude: 141.3503,
     imageUrl: 'https://placehold.co/800x1200?text=Birch+Path+Tea+Room',
     tags: ['tea', 'desserts', 'quiet escape', 'second floor'],
-    category: 'hidden gem',
-    collections: ['not on earth'],
+    category: 'cafe',
   },
   {
     id: 'place-014',
-    name: 'Hillview Observation Deck',
-    shortReview:
-      'An easy scenic stop with wide city views, especially striking around sunset and after dark.',
+    name: 'Hillview Sunset Truck',
+    shortReview: 'A temporary food truck stop with sunset views and an easygoing evening mood.',
     fullDescription:
-      'Hillview Observation Deck gives you the kind of panoramic payoff that helps orient the whole city at once. The route up is simple, the platform is comfortable to linger on, and the changing light makes repeat visits worth considering. It is especially memorable for couples and photographers chasing evening color.',
+      'Hillview Sunset Truck is exactly the sort of movable food stop that feels worth detouring for. The setup is casual, the menu is flexible, and the combination of views and quick service gives it a memorable, one-off feel.',
     address: '1-1 Fushimi, Chuo-ku, Sapporo',
     latitude: 43.0405,
     longitude: 141.3212,
-    imageUrl: 'https://placehold.co/800x1200?text=Hillview+Observation+Deck',
-    tags: ['sunset', 'panoramic', 'photos', 'viewpoint'],
-    category: 'hidden gem',
-    collections: ['on mars'],
+    imageUrl: 'https://placehold.co/800x1200?text=Hillview+Sunset+Truck',
+    tags: ['sunset', 'street vendor', 'photos', 'viewpoint'],
+    category: 'on_mars',
   },
   {
     id: 'place-015',
@@ -238,7 +220,6 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Spruce+%26+Stone+Cafe',
     tags: ['cheesecake', 'design', 'coffee break', 'comfortable'],
     category: 'cafe',
-    collections: ['not on earth'],
   },
   {
     id: 'place-016',
@@ -253,22 +234,19 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Velvet+Snow+Cocktail+Room',
     tags: ['cocktails', 'intimate', 'stylish', 'evening'],
     category: 'bar',
-    collections: ['on mars'],
   },
   {
     id: 'place-017',
-    name: 'Morning Crab Arcade',
-    shortReview:
-      'A seafood-forward market corridor that feels energetic early in the day and rewards hungry wandering.',
+    name: 'Morning Crab Arcade Cart',
+    shortReview: 'A seafood-forward roaming cart that rewards hungry early wandering.',
     fullDescription:
-      'Morning Crab Arcade is one of those places where appetite makes every decision easier. The market has enough movement to feel exciting, but it is laid out clearly enough that newcomers will not feel lost. Come early, bring curiosity, and expect to leave with both a meal and a few snack ideas for later.',
+      'Morning Crab Arcade Cart brings a market-like food crawl energy into a more lightweight, movable format. It is ideal when you want something fast, local, and slightly playful rather than a fixed sit-down stop.',
     address: '2-3-15 Nijo Market, Chuo-ku, Sapporo',
     latitude: 43.0581,
     longitude: 141.3574,
-    imageUrl: 'https://placehold.co/800x1200?text=Morning+Crab+Arcade',
+    imageUrl: 'https://placehold.co/800x1200?text=Morning+Crab+Arcade+Cart',
     tags: ['seafood', 'morning', 'food crawl', 'busy'],
-    category: 'market',
-    collections: ['on mars'],
+    category: 'on_mars',
   },
   {
     id: 'place-018',
@@ -283,36 +261,31 @@ export const mockPlaces: MockPlace[] = [
     imageUrl: 'https://placehold.co/800x1200?text=Charcoal+Alley+Jingisukan',
     tags: ['jingisukan', 'grill', 'group dinner', 'local specialty'],
     category: 'restaurant',
-    collections: ['not on earth'],
   },
   {
     id: 'place-019',
-    name: 'Secret Garden Footpath',
-    shortReview:
-      'A quiet walking route lined with small trees and benches, ideal for a low-key detour from busier areas.',
+    name: 'Secret Garden Coffee Stand',
+    shortReview: 'A tiny movable coffee stand tucked near a quiet walking route.',
     fullDescription:
-      'Secret Garden Footpath is less about a major landmark and more about atmosphere. The route feels tucked away, the pace is slow, and the little details make it pleasant: soft lighting, seasonal plants, and enough seating to encourage a pause. It is a nice option when you want a scenic break without committing to a major attraction.',
+      'Secret Garden Coffee Stand is one of those unusual little stops that feels discovered rather than marketed. The setup is minimal, the drinks are quick, and the mood is shaped by wherever it happens to land that day.',
     address: '6-1-2 Asahigaoka, Chuo-ku, Sapporo',
     latitude: 43.0369,
     longitude: 141.3304,
-    imageUrl: 'https://placehold.co/800x1200?text=Secret+Garden+Footpath',
-    tags: ['quiet walk', 'greenery', 'romantic', 'detour'],
-    category: 'hidden gem',
-    collections: ['on mars'],
+    imageUrl: 'https://placehold.co/800x1200?text=Secret+Garden+Coffee+Stand',
+    tags: ['quiet walk', 'street vendor', 'detour', 'coffee'],
+    category: 'on_mars',
   },
   {
     id: 'place-020',
-    name: 'Snowcap Park Lookout',
-    shortReview:
-      'A spacious park viewpoint with open skies and enough room to make even busy days feel breathable.',
+    name: 'Snowcap Park Espresso',
+    shortReview: 'A relaxed café stop with open skies nearby and a bright, breathable feel.',
     fullDescription:
-      'Snowcap Park Lookout offers a more relaxed sightseeing experience than tightly packed tourist stops. The open space gives families and couples room to move, and the elevated views make it easy to appreciate the wider shape of Sapporo. It is especially pleasant in clear weather when the horizon feels extra wide.',
+      'Snowcap Park Espresso offers a more relaxed coffee break than the average city-center café. The nearby open space makes it feel airy, and the pacing is ideal when you want a slower reset before heading onward.',
     address: '1-17 Moiwa, Minami-ku, Sapporo',
     latitude: 43.0284,
     longitude: 141.3412,
-    imageUrl: 'https://placehold.co/800x1200?text=Snowcap+Park+Lookout',
-    tags: ['park', 'view', 'family friendly', 'open air'],
-    category: 'hidden gem',
-    collections: ['not on earth'],
+    imageUrl: 'https://placehold.co/800x1200?text=Snowcap+Park+Espresso',
+    tags: ['park', 'coffee', 'family friendly', 'open air'],
+    category: 'cafe',
   },
 ];
