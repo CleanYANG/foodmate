@@ -69,8 +69,8 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   label: {
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.caption,
-    fontWeight: typography.weights.semibold,
     letterSpacing: 0.15,
   },
   primaryLabel: {

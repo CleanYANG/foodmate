@@ -151,8 +151,8 @@ const styles = StyleSheet.create({
   label: {
     color: colors.textSoft,
     flex: 1,
+    fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.caption,
-    fontWeight: typography.weights.semibold,
   },
   labelSelected: {
     color: colors.primary,

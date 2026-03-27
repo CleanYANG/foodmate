@@ -67,13 +67,14 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.white,
+    fontFamily: typography.fonts.semibold,
     fontSize: typography.sizes.titleLg,
-    fontWeight: typography.weights.heavy,
     letterSpacing: -0.8,
     lineHeight: typography.lineHeights.hero,
   },
   description: {
     color: 'rgba(255,255,255,0.94)',
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.body,
     lineHeight: typography.lineHeights.body,
   },

@@ -355,8 +355,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: 999,
     color: colors.text,
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.caption,
-    fontWeight: typography.weights.semibold,
     overflow: 'hidden',
     paddingHorizontal: spacing.sm,
     paddingVertical: 8,
@@ -370,8 +370,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(25, 22, 20, 0.82)',
     borderRadius: 999,
     color: colors.white,
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.caption,
-    fontWeight: typography.weights.semibold,
     overflow: 'hidden',
     paddingHorizontal: spacing.md,
     paddingVertical: 8,
@@ -393,8 +393,8 @@ const styles = StyleSheet.create({
   },
   feedbackText: {
     color: colors.text,
+    fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.bodySm,
-    fontWeight: typography.weights.heavy,
     letterSpacing: 1.1,
   },
   retryButton: {
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
   },
   retryText: {
     color: colors.primary,
+    fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.bodySm,
-    fontWeight: typography.weights.bold,
   },
 });

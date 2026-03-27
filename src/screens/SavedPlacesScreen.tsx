@@ -201,11 +201,12 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     color: colors.text,
+    fontFamily: typography.fonts.semibold,
     fontSize: typography.sizes.titleSm,
-    fontWeight: typography.weights.heavy,
   },
   emptyText: {
     color: colors.textMuted,
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.body,
     lineHeight: typography.lineHeights.body,
   },
@@ -244,13 +245,14 @@ const styles = StyleSheet.create({
   },
   placeTitle: {
     color: colors.text,
+    fontFamily: typography.fonts.semibold,
     fontSize: typography.sizes.titleSm,
-    fontWeight: typography.weights.bold,
     lineHeight: 30,
     letterSpacing: -0.3,
   },
   placeReview: {
     color: colors.textMuted,
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.bodySm,
     lineHeight: typography.lineHeights.body,
   },

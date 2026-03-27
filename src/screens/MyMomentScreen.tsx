@@ -120,12 +120,13 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     color: colors.text,
+    fontFamily: typography.fonts.semibold,
     fontSize: typography.sizes.titleMd,
-    fontWeight: typography.weights.heavy,
     letterSpacing: -0.6,
   },
   summaryLine: {
     color: colors.textMuted,
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.body,
     lineHeight: typography.lineHeights.body,
   },
@@ -160,15 +161,17 @@ const styles = StyleSheet.create({
   },
   momentTitle: {
     color: colors.white,
+    fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.bodySm,
-    fontWeight: typography.weights.bold,
   },
   momentText: {
     color: 'rgba(255,255,255,0.92)',
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.caption,
   },
   momentDate: {
     color: 'rgba(255,255,255,0.72)',
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.caption,
   },
   skeletonCard: {

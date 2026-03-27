@@ -8,6 +8,7 @@ import { SavedPlacesScreen } from '../screens/SavedPlacesScreen';
 import { SignInScreen } from '../screens/SignInScreen';
 import { useAuth } from '../store/AuthContext';
 import { colors } from '../theme/colors';
+import { typography } from '../theme/typography';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -27,7 +28,7 @@ export function AppNavigator() {
         headerShadowVisible: false,
         headerTintColor: colors.text,
         headerTitleStyle: {
-          fontWeight: '700',
+          fontFamily: typography.fonts.semibold,
           fontSize: 17,
         },
         contentStyle: {

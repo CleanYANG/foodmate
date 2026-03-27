@@ -26,20 +26,21 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     color: colors.primary,
+    fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.eyebrow,
-    fontWeight: typography.weights.bold,
     letterSpacing: typography.letterSpacing.wide,
     textTransform: 'uppercase',
   },
   title: {
     color: colors.text,
+    fontFamily: typography.fonts.semibold,
     fontSize: typography.sizes.titleMd,
-    fontWeight: typography.weights.heavy,
     letterSpacing: typography.letterSpacing.tight,
     lineHeight: typography.lineHeights.title,
   },
   description: {
     color: colors.textMuted,
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.body,
     lineHeight: typography.lineHeights.relaxed,
     maxWidth: 720,

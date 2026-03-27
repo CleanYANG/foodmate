@@ -252,13 +252,14 @@ const styles = StyleSheet.create({
   },
   placeTitle: {
     color: colors.text,
+    fontFamily: typography.fonts.semibold,
     fontSize: typography.sizes.titleLg,
-    fontWeight: typography.weights.heavy,
     letterSpacing: -0.8,
     lineHeight: typography.lineHeights.hero,
   },
   placeReview: {
     color: colors.textMuted,
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.body,
     lineHeight: typography.lineHeights.body,
   },
@@ -290,13 +291,13 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     color: colors.textSoft,
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.caption,
-    fontWeight: typography.weights.semibold,
   },
   infoValue: {
     color: colors.text,
+    fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.bodySm,
-    fontWeight: typography.weights.medium,
     lineHeight: typography.lineHeights.compact,
   },
   momentBlock: {
@@ -304,8 +305,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: colors.text,
+    fontFamily: typography.fonts.semibold,
     fontSize: typography.sizes.titleSm,
-    fontWeight: typography.weights.bold,
     letterSpacing: -0.3,
   },
   momentInput: {
@@ -314,6 +315,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     color: colors.text,
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.body,
     lineHeight: typography.lineHeights.body,
     minHeight: 148,

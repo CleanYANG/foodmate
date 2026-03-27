@@ -20,8 +20,8 @@ const styles = StyleSheet.create({
   },
   logo: {
     color: colors.white,
+    fontFamily: typography.fonts.semibold,
     fontSize: typography.sizes.titleLg,
-    fontWeight: typography.weights.heavy,
     letterSpacing: 0.8,
   },
 });

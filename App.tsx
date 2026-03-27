@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  useFonts,
+} from '@expo-google-fonts/inter';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -12,11 +18,20 @@ import { navigationTheme } from './src/theme/navigation';
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  if (!fontsLoaded) {
+    return <SplashScreen />;
+  }
 
   return (
     <SafeAreaProvider>

@@ -50,8 +50,8 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   label: {
+    fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.bodySm,
-    fontWeight: typography.weights.bold,
     letterSpacing: 0.1,
   },
   pressed: {
