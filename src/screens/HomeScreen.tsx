@@ -219,7 +219,7 @@ export function HomeScreen({ navigation }: Props) {
           }}
         />
 
-        <Pressable onPress={() => setIsRailExpanded(false)} style={styles.cardArea}>
+        <View style={styles.cardArea}>
           {isLoadingPlaces ? (
             <View style={styles.centerState}>
               <ActivityIndicator color={colors.primary} size="small" />
@@ -274,7 +274,7 @@ export function HomeScreen({ navigation }: Props) {
               <Text style={styles.retryText}>Retry</Text>
             </Pressable>
           ) : null}
-        </Pressable>
+        </View>
       </View>
     </Screen>
   );
