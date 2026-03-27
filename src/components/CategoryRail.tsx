@@ -6,7 +6,9 @@ import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 
 type CategoryRailProps = {
+  collapsedWidth: number;
   expanded: boolean;
+  expandedWidth: number;
   selectedCategory: DiscoveryFilterId;
   onToggleExpanded: () => void;
   onSelect: (category: DiscoveryFilterId) => void;
@@ -15,7 +17,9 @@ type CategoryRailProps = {
 };
 
 export function CategoryRail({
+  collapsedWidth,
   expanded,
+  expandedWidth,
   selectedCategory,
   onToggleExpanded,
   onSelect,
@@ -27,7 +31,11 @@ export function CategoryRail({
       accessibilityLabel={expanded ? 'Collapse category rail' : 'Expand category rail'}
       accessibilityRole="button"
       onPress={onToggleExpanded}
-      style={[styles.rail, expanded ? styles.railExpanded : styles.railCollapsed]}
+      style={[
+        styles.rail,
+        expanded ? styles.railExpanded : styles.railCollapsed,
+        { width: expanded ? expandedWidth : collapsedWidth },
+      ]}
     >
       <View style={styles.topSection}>
         {discoveryRailItems.map((item) => {
@@ -103,12 +111,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   railCollapsed: {
-    paddingHorizontal: spacing.xs,
-    width: 64,
+    paddingHorizontal: 4,
   },
   railExpanded: {
     paddingHorizontal: spacing.sm,
-    width: 156,
   },
   topSection: {
     gap: spacing.sm,
@@ -125,13 +131,13 @@ const styles = StyleSheet.create({
   },
   item: {
     borderRadius: 18,
-    minHeight: 60,
+    minHeight: 56,
     paddingVertical: spacing.sm,
   },
   itemCollapsed: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 2,
   },
   itemExpanded: {
     alignItems: 'center',
@@ -144,7 +150,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
   },
   icon: {
-    fontSize: 22,
+    fontSize: 20,
     textAlign: 'center',
     width: 24,
   },

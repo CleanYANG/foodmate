@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 32,
     flex: 1,
-    minHeight: 560,
+    minHeight: 0,
     overflow: 'hidden',
     justifyContent: 'flex-end',
   },

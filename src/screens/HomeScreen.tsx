@@ -25,12 +25,58 @@ import type { Place } from '../types/place';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
+type DiscoverLayoutConfig = {
+  pagePadding: number;
+  contentGap: number;
+  railCollapsedWidth: number;
+  railExpandedWidth: number;
+  cardWidthRatio: number;
+  cardHeightRatio: number;
+  cardMaxWidth?: number;
+  cardMaxHeight?: number;
+};
+
 function toErrorMessage(error: unknown) {
   if (error instanceof Error) {
     return error.message;
   }
 
   return 'Something went wrong while loading places.';
+}
+
+function getDiscoverLayoutConfig(windowWidth: number): DiscoverLayoutConfig {
+  if (windowWidth >= 1024) {
+    return {
+      pagePadding: 24,
+      contentGap: 20,
+      railCollapsedWidth: 56,
+      railExpandedWidth: 160,
+      cardWidthRatio: 0.76,
+      cardHeightRatio: 0.72,
+      cardMaxWidth: 620,
+      cardMaxHeight: 760,
+    };
+  }
+
+  if (windowWidth >= 768) {
+    return {
+      pagePadding: 20,
+      contentGap: 16,
+      railCollapsedWidth: 52,
+      railExpandedWidth: 150,
+      cardWidthRatio: 0.84,
+      cardHeightRatio: 0.73,
+    };
+  }
+
+  return {
+    pagePadding: 16,
+    contentGap: 12,
+    railCollapsedWidth: 48,
+    railExpandedWidth: 140,
+    cardWidthRatio: 0.88,
+    cardHeightRatio: 0.7,
+  };
 }
 
 const fallbackPlace: Place = {
@@ -68,9 +114,23 @@ export function HomeScreen({ navigation }: Props) {
   const [placesError, setPlacesError] = useState<string | null>(null);
   const pan = useRef(new Animated.ValueXY()).current;
   const { savePlace } = useSavedPlaces();
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const swipeThreshold = Math.max(windowWidth * 0.18, 72);
   const swipeOutDistance = windowWidth * 1.15;
+
+  const layout = useMemo(() => getDiscoverLayoutConfig(windowWidth), [windowWidth]);
+  const availableContentWidth = Math.max(
+    windowWidth - layout.pagePadding * 2 - layout.contentGap - layout.railCollapsedWidth,
+    240,
+  );
+  const cardWidth = Math.min(
+    availableContentWidth * layout.cardWidthRatio,
+    layout.cardMaxWidth ?? Number.POSITIVE_INFINITY,
+  );
+  const cardHeight = Math.min(
+    Math.max(windowHeight * layout.cardHeightRatio, 420),
+    layout.cardMaxHeight ?? Number.POSITIVE_INFINITY,
+  );
 
   useEffect(() => {
     const loadPlaces = async () => {
@@ -225,9 +285,20 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <Screen padded={false}>
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          {
+            gap: layout.contentGap,
+            paddingHorizontal: layout.pagePadding,
+            paddingVertical: layout.pagePadding,
+          },
+        ]}
+      >
         <CategoryRail
+          collapsedWidth={layout.railCollapsedWidth}
           expanded={isRailExpanded}
+          expandedWidth={layout.railExpandedWidth}
           selectedCategory={selectedCategory}
           onToggleExpanded={() => setIsRailExpanded((currentValue) => !currentValue)}
           onSelect={(category) => {
@@ -246,15 +317,20 @@ export function HomeScreen({ navigation }: Props) {
 
         <View style={styles.cardArea}>
           {isLoadingPlaces ? (
-            <View style={styles.centerState}>
+            <View style={[styles.centerState, { height: cardHeight, maxWidth: cardWidth }]}>
               <ActivityIndicator color={colors.primary} size="small" />
             </View>
           ) : placesError ? (
-            <View style={styles.centerState}>
+            <View style={[styles.centerState, { height: cardHeight, maxWidth: cardWidth }]}>
               <Text style={styles.stateText}>{placesError}</Text>
             </View>
           ) : (
-            <View style={styles.cardWrap}>
+            <View
+              style={[
+                styles.cardWrap,
+                { width: cardWidth, maxWidth: cardWidth, height: cardHeight },
+              ]}
+            >
               <Animated.View
                 style={[
                   styles.swipeCard,
@@ -314,16 +390,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     flex: 1,
     flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
   },
   cardArea: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
   },
   cardWrap: {
-    flex: 1,
     justifyContent: 'center',
   },
   swipeCard: {
@@ -335,10 +408,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 32,
     borderWidth: 1,
-    flex: 1,
     justifyContent: 'center',
-    minHeight: 560,
+    minWidth: 240,
     padding: spacing.lg,
+    width: '100%',
   },
   stateText: {
     color: colors.textMuted,
