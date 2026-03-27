@@ -6,14 +6,27 @@ import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 
 type CategoryRailProps = {
+  expanded: boolean;
   selectedCategory: DiscoveryFilterId;
+  onToggleExpanded: () => void;
   onSelect: (category: DiscoveryFilterId) => void;
   onPressMyMoment: () => void;
 };
 
-export function CategoryRail({ selectedCategory, onSelect, onPressMyMoment }: CategoryRailProps) {
+export function CategoryRail({
+  expanded,
+  selectedCategory,
+  onToggleExpanded,
+  onSelect,
+  onPressMyMoment,
+}: CategoryRailProps) {
   return (
-    <View style={styles.rail}>
+    <Pressable
+      accessibilityLabel={expanded ? 'Collapse category rail' : 'Expand category rail'}
+      accessibilityRole="button"
+      onPress={onToggleExpanded}
+      style={[styles.rail, expanded ? styles.railExpanded : styles.railCollapsed]}
+    >
       <View style={styles.topSection}>
         {discoveryRailItems.map((item) => {
           const selected = item.id === selectedCategory;
@@ -23,13 +36,25 @@ export function CategoryRail({ selectedCategory, onSelect, onPressMyMoment }: Ca
               key={item.id}
               accessibilityLabel={item.label}
               accessibilityRole="button"
-              onPress={() => onSelect(item.id)}
-              style={[styles.item, selected ? styles.itemSelected : null]}
+              onPress={(event) => {
+                event.stopPropagation();
+                onSelect(item.id);
+              }}
+              style={[
+                styles.item,
+                expanded ? styles.itemExpanded : styles.itemCollapsed,
+                selected ? styles.itemSelected : null,
+              ]}
             >
               <Text style={styles.icon}>{item.icon}</Text>
-              <Text style={[styles.label, selected ? styles.labelSelected : null]}>
-                {item.label}
-              </Text>
+              {expanded ? (
+                <Text
+                  numberOfLines={1}
+                  style={[styles.label, selected ? styles.labelSelected : null]}
+                >
+                  {item.label}
+                </Text>
+              ) : null}
             </Pressable>
           );
         })}
@@ -40,14 +65,17 @@ export function CategoryRail({ selectedCategory, onSelect, onPressMyMoment }: Ca
         <Pressable
           accessibilityLabel="My Moment"
           accessibilityRole="button"
-          onPress={onPressMyMoment}
-          style={styles.item}
+          onPress={(event) => {
+            event.stopPropagation();
+            onPressMyMoment();
+          }}
+          style={[styles.item, expanded ? styles.itemExpanded : styles.itemCollapsed]}
         >
           <Text style={styles.icon}>📝</Text>
-          <Text style={styles.label}>My Moment</Text>
+          {expanded ? <Text style={styles.label}>My Moment</Text> : null}
         </Pressable>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -58,9 +86,15 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.xs,
     paddingVertical: spacing.sm,
-    width: 84,
+  },
+  railCollapsed: {
+    paddingHorizontal: spacing.xs,
+    width: 64,
+  },
+  railExpanded: {
+    paddingHorizontal: spacing.sm,
+    width: 156,
   },
   topSection: {
     gap: spacing.sm,
@@ -73,29 +107,38 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     borderRadius: 999,
     height: 1,
-    marginHorizontal: 10,
+    marginHorizontal: 8,
   },
   item: {
-    alignItems: 'center',
     borderRadius: 18,
-    gap: 6,
-    justifyContent: 'center',
-    minHeight: 72,
-    paddingHorizontal: 6,
+    minHeight: 60,
     paddingVertical: spacing.sm,
+  },
+  itemCollapsed: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  itemExpanded: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'flex-start',
+    paddingHorizontal: spacing.sm,
   },
   itemSelected: {
     backgroundColor: colors.primarySoft,
   },
   icon: {
-    fontSize: 24,
+    fontSize: 22,
     textAlign: 'center',
+    width: 24,
   },
   label: {
     color: colors.textSoft,
+    flex: 1,
     fontSize: typography.sizes.caption,
     fontWeight: typography.weights.semibold,
-    textAlign: 'center',
   },
   labelSelected: {
     color: colors.primary,

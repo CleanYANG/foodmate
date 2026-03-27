@@ -61,6 +61,7 @@ export function HomeScreen({ navigation }: Props) {
     on_mars: 0,
   });
   const [feedback, setFeedback] = useState<'left' | 'right' | null>(null);
+  const [isRailExpanded, setIsRailExpanded] = useState(false);
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
   const [placesError, setPlacesError] = useState<string | null>(null);
   const pan = useRef(new Animated.ValueXY()).current;
@@ -205,12 +206,20 @@ export function HomeScreen({ navigation }: Props) {
     <Screen padded={false}>
       <View style={styles.container}>
         <CategoryRail
+          expanded={isRailExpanded}
           selectedCategory={selectedCategory}
-          onSelect={setSelectedCategory}
-          onPressMyMoment={() => navigation.navigate('MyMoment')}
+          onToggleExpanded={() => setIsRailExpanded((currentValue) => !currentValue)}
+          onSelect={(category) => {
+            setSelectedCategory(category);
+            setIsRailExpanded(false);
+          }}
+          onPressMyMoment={() => {
+            setIsRailExpanded(false);
+            navigation.navigate('MyMoment');
+          }}
         />
 
-        <View style={styles.cardArea}>
+        <Pressable onPress={() => setIsRailExpanded(false)} style={styles.cardArea}>
           {isLoadingPlaces ? (
             <View style={styles.centerState}>
               <ActivityIndicator color={colors.primary} size="small" />
@@ -265,7 +274,7 @@ export function HomeScreen({ navigation }: Props) {
               <Text style={styles.retryText}>Retry</Text>
             </Pressable>
           ) : null}
-        </View>
+        </Pressable>
       </View>
     </Screen>
   );
