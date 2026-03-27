@@ -17,6 +17,7 @@ import { Screen } from '../components/Screen';
 import { type DiscoveryFilterId } from '../config/discoveryRail';
 import type { RootStackParamList } from '../navigation/types';
 import { fetchPlaces } from '../services/placeService';
+import { useSavedPlaces } from '../store/SavedPlacesContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -60,11 +61,13 @@ export function HomeScreen({ navigation }: Props) {
     cafe: 0,
     on_mars: 0,
   });
-  const [feedback, setFeedback] = useState<'left' | 'right' | null>(null);
+  const [feedback, setFeedback] = useState<'skip' | 'save' | null>(null);
   const [isRailExpanded, setIsRailExpanded] = useState(false);
+  const [swipeFeedbackMessage, setSwipeFeedbackMessage] = useState<string | null>(null);
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
   const [placesError, setPlacesError] = useState<string | null>(null);
   const pan = useRef(new Animated.ValueXY()).current;
+  const { savePlace } = useSavedPlaces();
   const { width: windowWidth } = useWindowDimensions();
   const swipeThreshold = Math.max(windowWidth * 0.18, 72);
   const swipeOutDistance = windowWidth * 1.15;
@@ -110,6 +113,15 @@ export function HomeScreen({ navigation }: Props) {
     setFeedback(null);
   }, [pan, selectedCategory, normalizedCurrentIndex]);
 
+  useEffect(() => {
+    if (!swipeFeedbackMessage) {
+      return;
+    }
+
+    const timeout = setTimeout(() => setSwipeFeedbackMessage(null), 1800);
+    return () => clearTimeout(timeout);
+  }, [swipeFeedbackMessage]);
+
   const resetCardPosition = () => {
     Animated.spring(pan, {
       toValue: { x: 0, y: 0 },
@@ -119,10 +131,19 @@ export function HomeScreen({ navigation }: Props) {
     }).start(() => setFeedback(null));
   };
 
-  const advanceCard = (direction: 'left' | 'right') => {
+  const advanceCard = async (direction: 'left' | 'right') => {
     if (!hasSelectedCategoryPlace) {
       resetCardPosition();
       return;
+    }
+
+    if (direction === 'right') {
+      try {
+        await savePlace(selectedPlace.id);
+        setSwipeFeedbackMessage('Saved for later');
+      } catch {
+        setSwipeFeedbackMessage(null);
+      }
     }
 
     Animated.timing(pan, {
@@ -158,21 +179,21 @@ export function HomeScreen({ navigation }: Props) {
           pan.setValue({ x: gestureState.dx, y: gestureState.dy * 0.06 });
 
           if (gestureState.dx > 18) {
-            setFeedback('right');
+            setFeedback('save');
           } else if (gestureState.dx < -18) {
-            setFeedback('left');
+            setFeedback('skip');
           } else {
             setFeedback(null);
           }
         },
         onPanResponderRelease: (_, gestureState) => {
           if (gestureState.dx > swipeThreshold) {
-            advanceCard('right');
+            void advanceCard('right');
             return;
           }
 
           if (gestureState.dx < -swipeThreshold) {
-            advanceCard('left');
+            void advanceCard('left');
             return;
           }
 
@@ -213,6 +234,10 @@ export function HomeScreen({ navigation }: Props) {
             setSelectedCategory(category);
             setIsRailExpanded(false);
           }}
+          onPressSavedForLater={() => {
+            setIsRailExpanded(false);
+            navigation.navigate('SavedPlaces');
+          }}
           onPressMyMoment={() => {
             setIsRailExpanded(false);
             navigation.navigate('MyMoment');
@@ -250,13 +275,11 @@ export function HomeScreen({ navigation }: Props) {
                   <View
                     style={[
                       styles.feedbackPill,
-                      feedback === 'right' ? styles.feedbackRight : styles.feedbackLeft,
+                      feedback === 'save' ? styles.feedbackRight : styles.feedbackLeft,
                     ]}
                     pointerEvents="none"
                   >
-                    <Text style={styles.feedbackText}>
-                      {feedback === 'right' ? 'NEXT' : 'SKIP'}
-                    </Text>
+                    <Text style={styles.feedbackText}>{feedback === 'save' ? 'SAVE' : 'SKIP'}</Text>
                   </View>
                 ) : null}
               </Animated.View>
@@ -264,6 +287,12 @@ export function HomeScreen({ navigation }: Props) {
               {!hasSelectedCategoryPlace ? (
                 <View pointerEvents="none" style={styles.noticeWrap}>
                   <Text style={styles.noticeText}>No live places in this category yet.</Text>
+                </View>
+              ) : null}
+
+              {swipeFeedbackMessage ? (
+                <View pointerEvents="none" style={styles.savedNoticeWrap}>
+                  <Text style={styles.savedNoticeText}>{swipeFeedbackMessage}</Text>
                 </View>
               ) : null}
             </View>
@@ -330,6 +359,21 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.semibold,
     overflow: 'hidden',
     paddingHorizontal: spacing.sm,
+    paddingVertical: 8,
+  },
+  savedNoticeWrap: {
+    alignSelf: 'center',
+    bottom: spacing.lg,
+    position: 'absolute',
+  },
+  savedNoticeText: {
+    backgroundColor: 'rgba(25, 22, 20, 0.82)',
+    borderRadius: 999,
+    color: colors.white,
+    fontSize: typography.sizes.caption,
+    fontWeight: typography.weights.semibold,
+    overflow: 'hidden',
+    paddingHorizontal: spacing.md,
     paddingVertical: 8,
   },
   feedbackPill: {

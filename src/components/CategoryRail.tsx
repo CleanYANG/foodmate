@@ -10,6 +10,7 @@ type CategoryRailProps = {
   selectedCategory: DiscoveryFilterId;
   onToggleExpanded: () => void;
   onSelect: (category: DiscoveryFilterId) => void;
+  onPressSavedForLater: () => void;
   onPressMyMoment: () => void;
 };
 
@@ -18,6 +19,7 @@ export function CategoryRail({
   selectedCategory,
   onToggleExpanded,
   onSelect,
+  onPressSavedForLater,
   onPressMyMoment,
 }: CategoryRailProps) {
   return (
@@ -62,6 +64,18 @@ export function CategoryRail({
 
       <View style={styles.bottomSection}>
         <View style={styles.divider} />
+        <Pressable
+          accessibilityLabel="Saved for later"
+          accessibilityRole="button"
+          onPress={(event) => {
+            event.stopPropagation();
+            onPressSavedForLater();
+          }}
+          style={[styles.item, expanded ? styles.itemExpanded : styles.itemCollapsed]}
+        >
+          <Text style={styles.icon}>⭐</Text>
+          {expanded ? <Text style={styles.label}>Saved for later</Text> : null}
+        </Pressable>
         <Pressable
           accessibilityLabel="My Moment"
           accessibilityRole="button"
