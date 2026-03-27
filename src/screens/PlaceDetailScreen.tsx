@@ -1,27 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import { formatCategoryLabel } from '../config/discoveryRail';
 import { Button } from '../components/Button';
-import { Card } from '../components/Card';
 import { InlineNotice } from '../components/InlineNotice';
 import { Screen } from '../components/Screen';
-import { ScreenHeader } from '../components/ScreenHeader';
 import { SkeletonBlock } from '../components/SkeletonBlock';
 import { StateCard } from '../components/StateCard';
 import { Tag } from '../components/Tag';
 import { formatTagLabel } from '../lib/placeTags';
 import type { RootStackParamList } from '../navigation/types';
-import { openPlaceInMaps } from '../services/mapService';
-import { addPlaceReview, fetchPlaceById, fetchPlaceReviews } from '../services/placeService';
-import { useAuth } from '../store/AuthContext';
-import { useSavedPlaces } from '../store/SavedPlacesContext';
+import { fetchPlaceById } from '../services/placeService';
+import { useMoments } from '../store/MomentsContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import type { Place } from '../types/place';
-import type { PlaceReview } from '../types/review';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PlaceDetail'>;
 
@@ -33,98 +27,88 @@ function toErrorMessage(error: unknown) {
   return 'Something went wrong while loading this place.';
 }
 
-function formatReviewDate(value: string) {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }).format(new Date(value));
+function formatPrice(place: Place) {
+  if (place.category === 'bar') {
+    return '$$';
+  }
+
+  if (place.category === 'restaurant') {
+    return '$$$';
+  }
+
+  return '$$';
+}
+
+function PlaceDetailInfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoIcon}>{icon}</Text>
+      <View style={styles.infoCopy}>
+        <Text style={styles.infoLabel}>{label}</Text>
+        <Text style={styles.infoValue}>{value}</Text>
+      </View>
+    </View>
+  );
 }
 
 export function PlaceDetailScreen({ route, navigation }: Props) {
   const { placeId } = route.params ?? {};
-  const { isAuthenticated } = useAuth();
   const [place, setPlace] = useState<Place | null>(null);
-  const [reviews, setReviews] = useState<PlaceReview[]>([]);
-  const [reviewText, setReviewText] = useState('');
+  const [momentText, setMomentText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isSavingMoment, setIsSavingMoment] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [reviewErrorMessage, setReviewErrorMessage] = useState<string | null>(null);
-  const [saveFeedbackMessage, setSaveFeedbackMessage] = useState<string | null>(null);
-  const [reviewFeedbackMessage, setReviewFeedbackMessage] = useState<string | null>(null);
-  const [mapFeedbackMessage, setMapFeedbackMessage] = useState<string | null>(null);
-  const { isSaved, savePlace, removePlace, promptSignIn } = useSavedPlaces();
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const { saveMoment } = useMoments();
 
-  const loadPlace = async () => {
-    if (!placeId) {
-      setErrorMessage('Missing place id.');
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const nextPlace = await fetchPlaceById(placeId);
-
-      if (!nextPlace) {
-        setErrorMessage('This place could not be found.');
+  useEffect(() => {
+    const loadPlace = async () => {
+      if (!placeId) {
+        setErrorMessage('Missing place id.');
+        setIsLoading(false);
         return;
       }
 
-      setPlace(nextPlace);
-    } catch (error) {
-      setErrorMessage(toErrorMessage(error));
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      setIsLoading(true);
+      setErrorMessage(null);
 
-  const loadReviews = async () => {
-    if (!placeId) {
-      setIsLoadingReviews(false);
-      return;
-    }
+      try {
+        const nextPlace = await fetchPlaceById(placeId);
 
-    setIsLoadingReviews(true);
-    setReviewErrorMessage(null);
+        if (!nextPlace) {
+          setErrorMessage('This place could not be found.');
+          return;
+        }
 
-    try {
-      const nextReviews = await fetchPlaceReviews(placeId);
-      setReviews(nextReviews);
-    } catch (error) {
-      setReviewErrorMessage(toErrorMessage(error));
-    } finally {
-      setIsLoadingReviews(false);
-    }
-  };
+        setPlace(nextPlace);
+      } catch (error) {
+        setErrorMessage(toErrorMessage(error));
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  useEffect(() => {
     void loadPlace();
   }, [placeId]);
 
   useEffect(() => {
-    void loadReviews();
-  }, [placeId]);
-
-  const trimmedReviewText = useMemo(() => reviewText.trim(), [reviewText]);
-
-  useEffect(() => {
-    if (!saveFeedbackMessage && !reviewFeedbackMessage && !mapFeedbackMessage) {
+    if (!feedbackMessage) {
       return;
     }
 
-    const timeout = setTimeout(() => {
-      setSaveFeedbackMessage(null);
-      setReviewFeedbackMessage(null);
-      setMapFeedbackMessage(null);
-    }, 2400);
-
+    const timeout = setTimeout(() => setFeedbackMessage(null), 2200);
     return () => clearTimeout(timeout);
-  }, [saveFeedbackMessage, reviewFeedbackMessage, mapFeedbackMessage]);
+  }, [feedbackMessage]);
+
+  const trimmedMomentText = useMemo(() => momentText.trim(), [momentText]);
 
   if (isLoading) {
     return (
@@ -138,17 +122,13 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
               <SkeletonBlock style={styles.skeletonChip} />
               <SkeletonBlock style={styles.skeletonChipWide} />
             </View>
+            <View style={styles.infoBlock}>
+              <SkeletonBlock style={styles.skeletonInfoRow} />
+              <SkeletonBlock style={styles.skeletonInfoRow} />
+              <SkeletonBlock style={styles.skeletonInfoRow} />
+            </View>
+            <SkeletonBlock style={styles.skeletonInput} />
             <SkeletonBlock style={styles.skeletonButton} />
-            <Card>
-              <SkeletonBlock style={styles.skeletonSectionTitle} />
-              <SkeletonBlock style={styles.skeletonBodyLine} />
-              <SkeletonBlock style={styles.skeletonBodyLine} />
-              <SkeletonBlock style={styles.skeletonBodyLineShort} />
-            </Card>
-            <Card>
-              <SkeletonBlock style={styles.skeletonSectionTitle} />
-              <SkeletonBlock style={styles.skeletonBodyLineShort} />
-            </Card>
           </View>
         </ScrollView>
       </Screen>
@@ -158,90 +138,34 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   if (errorMessage || !place) {
     return (
       <Screen>
-        <View style={styles.body}>
-          <ScreenHeader
-            eyebrow="CityTalk"
-            title="Could not load place"
-            description={errorMessage ?? 'This place is unavailable right now.'}
-          />
+        <View style={styles.errorWrap}>
           <StateCard
             title="Place details are unavailable"
-            description="Try loading this place again. If the problem continues, the record may have been removed."
+            description={errorMessage ?? 'This place is unavailable right now.'}
             actionLabel="Retry"
-            onAction={() => void loadPlace()}
+            onAction={() => navigation.replace('PlaceDetail', { placeId })}
           />
         </View>
       </Screen>
     );
   }
 
-  const saved = isSaved(place.id);
-
-  const handleSaveToggle = async () => {
-    try {
-      if (saved) {
-        await removePlace(place.id);
-        setSaveFeedbackMessage('Removed from saved places.');
-        return;
-      }
-
-      await savePlace(place.id);
-      setSaveFeedbackMessage('Saved for later.');
-    } catch {
-      // Prompting/error state is handled upstream.
-    }
-  };
-
-  const handleOpenMaps = async () => {
-    try {
-      await openPlaceInMaps(place);
-      setMapFeedbackMessage('Opening maps…');
-    } catch (error) {
-      setMapFeedbackMessage(toErrorMessage(error));
-    }
-  };
-
-  const handleSubmitReview = async () => {
-    if (!trimmedReviewText) {
-      setReviewErrorMessage('Review text cannot be empty.');
+  const handleSaveMoment = async () => {
+    if (!trimmedMomentText) {
+      Alert.alert('Your Moment', 'Write a short memory before saving it.');
       return;
     }
 
-    if (!isAuthenticated) {
-      promptSignIn();
-      navigation.navigate('SignIn');
-      return;
-    }
-
-    setIsSubmittingReview(true);
-    setReviewErrorMessage(null);
-
-    const optimisticReview: PlaceReview = {
-      id: `optimistic-${Date.now()}`,
-      placeId: place.id,
-      body: trimmedReviewText,
-      createdAt: new Date().toISOString(),
-      reviewerName: 'You',
-      userId: 'local-user',
-    };
-
-    setReviews((currentValue) => [optimisticReview, ...currentValue]);
-    setReviewText('');
+    setIsSavingMoment(true);
 
     try {
-      const createdReview = await addPlaceReview(place.id, trimmedReviewText);
-      setReviews((currentValue) =>
-        currentValue.map((review) => (review.id === optimisticReview.id ? createdReview : review)),
-      );
-      setReviewFeedbackMessage('Review posted.');
+      await saveMoment(place, trimmedMomentText);
+      setMomentText('');
+      setFeedbackMessage('Moment saved.');
     } catch (error) {
-      setReviews((currentValue) =>
-        currentValue.filter((review) => review.id !== optimisticReview.id),
-      );
-      setReviewText(trimmedReviewText);
-      setReviewErrorMessage(toErrorMessage(error));
+      setFeedbackMessage(toErrorMessage(error));
     } finally {
-      setIsSubmittingReview(false);
+      setIsSavingMoment(false);
     }
   };
 
@@ -252,129 +176,43 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
         <View style={styles.heroImageOverlay} />
 
         <View style={styles.body}>
-          <View style={styles.headerCard}>
-            <ScreenHeader
-              eyebrow={formatCategoryLabel(place.category)}
-              title={place.name}
-              description={place.shortReview}
-            />
+          <View style={styles.textBlock}>
+            <Text style={styles.placeTitle}>{place.name}</Text>
+            <Text style={styles.placeReview}>{place.shortReview}</Text>
           </View>
-
-          {saveFeedbackMessage ? (
-            <InlineNotice message={saveFeedbackMessage} tone="success" />
-          ) : null}
-          {reviewFeedbackMessage ? (
-            <InlineNotice message={reviewFeedbackMessage} tone="success" />
-          ) : null}
-          {mapFeedbackMessage ? (
-            <InlineNotice
-              message={mapFeedbackMessage}
-              tone={mapFeedbackMessage === 'Opening maps…' ? 'success' : 'error'}
-            />
-          ) : null}
 
           {place.tags.length > 0 ? (
             <View style={styles.tagsRow}>
-              {place.tags.map((tag) => (
+              {place.tags.slice(0, 3).map((tag) => (
                 <Tag key={tag} label={formatTagLabel(tag)} />
               ))}
             </View>
           ) : null}
 
-          <View style={styles.actionButtonsColumn}>
-            <Button
-              variant={saved ? 'secondary' : 'primary'}
-              onPress={() => void handleSaveToggle()}
-            >
-              {saved ? 'Remove from saved' : 'Save this place'}
-            </Button>
-            <Button variant="ghost" onPress={() => void handleOpenMaps()}>
-              Open in maps
-            </Button>
+          <View style={styles.infoBlock}>
+            <PlaceDetailInfoRow icon="📍" label="Location" value={place.address} />
+            <PlaceDetailInfoRow icon="🕒" label="Hours" value="Hours coming soon" />
+            <PlaceDetailInfoRow icon="💰" label="Price" value={formatPrice(place)} />
           </View>
 
-          <Card>
-            <Text style={styles.sectionTitle}>About this place</Text>
-            <Text style={styles.bodyText}>{place.fullDescription}</Text>
-          </Card>
+          <View style={styles.momentBlock}>
+            <Text style={styles.sectionTitle}>Your Moment</Text>
+            <TextInput
+              multiline
+              onChangeText={setMomentText}
+              placeholder="What did this place feel like?"
+              placeholderTextColor={colors.textSoft}
+              style={styles.momentInput}
+              textAlignVertical="top"
+              value={momentText}
+            />
+          </View>
 
-          <Card>
-            <Text style={styles.sectionTitle}>Address</Text>
-            <Text style={styles.bodyText}>{place.address}</Text>
-          </Card>
+          {feedbackMessage ? <InlineNotice message={feedbackMessage} tone="success" /> : null}
 
-          <Card>
-            <View style={styles.reviewHeaderRow}>
-              <Text style={styles.sectionTitle}>Reviews</Text>
-              <Text style={styles.reviewCount}>{reviews.length}</Text>
-            </View>
-
-            <View style={styles.reviewComposer}>
-              <TextInput
-                editable={!isSubmittingReview}
-                multiline
-                onChangeText={setReviewText}
-                placeholder={
-                  isAuthenticated
-                    ? 'Share a quick thought about this place'
-                    : 'Sign in to leave a short review'
-                }
-                placeholderTextColor={colors.textSoft}
-                style={styles.reviewInput}
-                textAlignVertical="top"
-                value={reviewText}
-              />
-
-              {reviewErrorMessage ? (
-                <InlineNotice message={reviewErrorMessage} tone="error" />
-              ) : null}
-
-              <Button
-                variant={isAuthenticated ? 'primary' : 'secondary'}
-                disabled={isSubmittingReview}
-                onPress={() => void handleSubmitReview()}
-              >
-                {isSubmittingReview
-                  ? 'Posting...'
-                  : isAuthenticated
-                    ? 'Post review'
-                    : 'Sign in to review'}
-              </Button>
-            </View>
-
-            {isLoadingReviews ? (
-              <View style={styles.reviewLoadingBlock}>
-                <SkeletonBlock style={styles.skeletonBodyLine} />
-                <SkeletonBlock style={styles.skeletonBodyLineShort} />
-                <SkeletonBlock style={styles.skeletonBodyLine} />
-              </View>
-            ) : null}
-
-            {!isLoadingReviews && reviewErrorMessage && reviews.length === 0 ? (
-              <StateCard
-                title="Reviews could not load"
-                description="Try fetching reviews again."
-                actionLabel="Retry reviews"
-                onAction={() => void loadReviews()}
-              />
-            ) : null}
-
-            {!isLoadingReviews && !reviewErrorMessage && reviews.length === 0 ? (
-              <Text style={styles.bodyText}>
-                No reviews yet. Be the first to leave a quick note.
-              </Text>
-            ) : null}
-
-            {reviews.map((review) => (
-              <View key={review.id} style={styles.reviewItem}>
-                <View style={styles.reviewMetaRow}>
-                  <Text style={styles.reviewAuthor}>{review.reviewerName}</Text>
-                  <Text style={styles.reviewDate}>{formatReviewDate(review.createdAt)}</Text>
-                </View>
-                <Text style={styles.reviewBody}>{review.body}</Text>
-              </View>
-            ))}
-          </Card>
+          <Button disabled={isSavingMoment} onPress={() => void handleSaveMoment()}>
+            {isSavingMoment ? 'Saving...' : 'Save Moment'}
+          </Button>
         </View>
       </ScrollView>
     </Screen>
@@ -386,39 +224,101 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   heroImage: {
-    height: 430,
+    height: 420,
     width: '100%',
   },
   heroImageOverlay: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(20, 16, 13, 0.1)',
     bottom: undefined,
-    height: 430,
-    backgroundColor: 'rgba(20, 16, 13, 0.08)',
+    height: 420,
   },
   body: {
     gap: spacing.lg,
+    marginTop: -16,
     padding: spacing.md,
-    marginTop: -28,
   },
-  headerCard: {
+  errorWrap: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  textBlock: {
     backgroundColor: colors.surface,
-    borderRadius: 24,
-    borderWidth: 1,
     borderColor: colors.border,
+    borderRadius: 28,
+    borderWidth: 1,
+    gap: spacing.sm,
     padding: spacing.lg,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 4,
+  },
+  placeTitle: {
+    color: colors.text,
+    fontSize: typography.sizes.titleLg,
+    fontWeight: typography.weights.heavy,
+    letterSpacing: -0.8,
+    lineHeight: typography.lineHeights.hero,
+  },
+  placeReview: {
+    color: colors.textMuted,
+    fontSize: typography.sizes.body,
+    lineHeight: typography.lineHeights.body,
   },
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  actionButtonsColumn: {
+  infoBlock: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 28,
+    borderWidth: 1,
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  infoRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  infoIcon: {
+    fontSize: 20,
+    width: 24,
+  },
+  infoCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  infoLabel: {
+    color: colors.textSoft,
+    fontSize: typography.sizes.caption,
+    fontWeight: typography.weights.semibold,
+  },
+  infoValue: {
+    color: colors.text,
+    fontSize: typography.sizes.bodySm,
+    fontWeight: typography.weights.medium,
+    lineHeight: typography.lineHeights.compact,
+  },
+  momentBlock: {
     gap: spacing.sm,
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: typography.sizes.titleSm,
+    fontWeight: typography.weights.bold,
+    letterSpacing: -0.3,
+  },
+  momentInput: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 24,
+    borderWidth: 1,
+    color: colors.text,
+    fontSize: typography.sizes.body,
+    lineHeight: typography.lineHeights.body,
+    minHeight: 148,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
   },
   skeletonChip: {
     height: 32,
@@ -432,84 +332,21 @@ const styles = StyleSheet.create({
     height: 34,
     width: '72%',
   },
-  skeletonSectionTitle: {
-    height: 24,
-    width: '38%',
-  },
   skeletonBodyLine: {
     height: 18,
     width: '100%',
   },
-  skeletonBodyLineShort: {
-    height: 18,
-    width: '64%',
-  },
-  skeletonButton: {
-    height: 52,
+  skeletonInfoRow: {
+    height: 42,
     width: '100%',
   },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: typography.sizes.titleSm,
-    fontWeight: typography.weights.bold,
-    letterSpacing: -0.3,
+  skeletonInput: {
+    borderRadius: 24,
+    height: 148,
+    width: '100%',
   },
-  bodyText: {
-    color: colors.textMuted,
-    fontSize: typography.sizes.body,
-    lineHeight: typography.lineHeights.relaxed,
-  },
-  reviewHeaderRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  reviewCount: {
-    color: colors.textSoft,
-    fontSize: typography.sizes.bodySm,
-    fontWeight: typography.weights.semibold,
-  },
-  reviewComposer: {
-    gap: spacing.md,
-  },
-  reviewInput: {
-    backgroundColor: colors.surfaceMuted,
-    borderColor: colors.border,
-    borderRadius: 18,
-    borderWidth: 1,
-    color: colors.text,
-    fontSize: typography.sizes.bodySm,
-    lineHeight: typography.lineHeights.body,
-    minHeight: 104,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  reviewLoadingBlock: {
-    gap: spacing.sm,
-  },
-  reviewItem: {
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
-    gap: spacing.xs,
-    paddingTop: spacing.md,
-  },
-  reviewMetaRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  reviewAuthor: {
-    color: colors.text,
-    fontSize: typography.sizes.bodySm,
-    fontWeight: typography.weights.bold,
-  },
-  reviewDate: {
-    color: colors.textSoft,
-    fontSize: typography.sizes.caption,
-  },
-  reviewBody: {
-    color: colors.textMuted,
-    fontSize: typography.sizes.bodySm,
-    lineHeight: typography.lineHeights.body,
+  skeletonButton: {
+    height: 54,
+    width: '100%',
   },
 });

@@ -94,6 +94,7 @@ export function HomeScreen({ navigation }: Props) {
         <CategoryRail
           selectedCategory={hasSelectedCategoryPlace ? selectedCategory : visibleCategory}
           onSelect={setSelectedCategory}
+          onPressMyMoment={() => navigation.navigate('MyMoment')}
         />
 
         <View style={styles.cardArea}>
