@@ -1,3 +1,12 @@
+import type { ImageSourcePropType } from 'react-native';
+
+import cafe1 from '../../assets/cafe_1.jpeg';
+import cafe2 from '../../assets/cafe_2.jpeg';
+import cafe3 from '../../assets/cafe_3.jpeg';
+import cafe4 from '../../assets/cafe_4.jpeg';
+import restaurant1 from '../../assets/restaurant_1.jpeg';
+import restaurant2 from '../../assets/restaurant_2.jpeg';
+
 export type PlaceCategory = 'restaurant' | 'cafe' | 'bar' | 'on_mars';
 
 export type MockPlace = {
@@ -8,10 +17,38 @@ export type MockPlace = {
   address: string;
   latitude: number;
   longitude: number;
-  imageUrl: string;
+  imageUrl: string | ImageSourcePropType;
   tags: string[];
   category: PlaceCategory;
 };
+
+const cafeImages = [cafe1, cafe2, cafe3, cafe4] as const;
+const restaurantImages = [restaurant1, restaurant2] as const;
+
+const cafePlaceIds = ['place-001', 'place-006', 'place-008', 'place-013', 'place-015', 'place-020'];
+const restaurantPlaceIds = ['place-004', 'place-005', 'place-011', 'place-012', 'place-018'];
+
+const cafeImageByPlaceId: Partial<Record<string, string | ImageSourcePropType>> =
+  cafePlaceIds.reduce(
+    (accumulator, placeId, index) => {
+      accumulator[placeId] = cafeImages[index % cafeImages.length];
+      return accumulator;
+    },
+    {} as Partial<Record<string, string | ImageSourcePropType>>,
+  );
+
+const restaurantImageByPlaceId: Partial<Record<string, string | ImageSourcePropType>> =
+  restaurantPlaceIds.reduce(
+    (accumulator, placeId, index) => {
+      accumulator[placeId] = restaurantImages[index % restaurantImages.length];
+      return accumulator;
+    },
+    {} as Partial<Record<string, string | ImageSourcePropType>>,
+  );
+
+function getMockImage(placeId: string, fallbackUrl: string) {
+  return cafeImageByPlaceId[placeId] ?? restaurantImageByPlaceId[placeId] ?? fallbackUrl;
+}
 
 export const mockPlaces: MockPlace[] = [
   {
@@ -24,7 +61,7 @@ export const mockPlaces: MockPlace[] = [
     address: '2-4-8 Odorinishi, Chuo-ku, Sapporo',
     latitude: 43.0609,
     longitude: 141.3488,
-    imageUrl: 'https://placehold.co/800x1200?text=Snow+Lantern+Coffee',
+    imageUrl: getMockImage('place-001', 'https://placehold.co/800x1200?text=Snow+Lantern+Coffee'),
     tags: ['cozy', 'quiet', 'coffee', 'winter view'],
     category: 'cafe',
   },
@@ -66,7 +103,7 @@ export const mockPlaces: MockPlace[] = [
     address: '3-2-14 Kita 5 Johigashi, Chuo-ku, Sapporo',
     latitude: 43.0665,
     longitude: 141.3581,
-    imageUrl: 'https://placehold.co/800x1200?text=Miso+Corner+Shokudo',
+    imageUrl: getMockImage('place-004', 'https://placehold.co/800x1200?text=Miso+Corner+Shokudo'),
     tags: ['ramen', 'comfort food', 'quick meal', 'local classic'],
     category: 'restaurant',
   },
@@ -80,7 +117,7 @@ export const mockPlaces: MockPlace[] = [
     address: '8-1-5 Minami 2 Jonishi, Chuo-ku, Sapporo',
     latitude: 43.0577,
     longitude: 141.3475,
-    imageUrl: 'https://placehold.co/800x1200?text=Moondrop+Terrace',
+    imageUrl: getMockImage('place-005', 'https://placehold.co/800x1200?text=Moondrop+Terrace'),
     tags: ['romantic', 'city view', 'dinner', 'stylish'],
     category: 'restaurant',
   },
@@ -94,7 +131,7 @@ export const mockPlaces: MockPlace[] = [
     address: '4-6-3 Maruyama Nishi-machi, Chuo-ku, Sapporo',
     latitude: 43.0555,
     longitude: 141.3148,
-    imageUrl: 'https://placehold.co/800x1200?text=Maple+Lane+Bakehouse',
+    imageUrl: getMockImage('place-006', 'https://placehold.co/800x1200?text=Maple+Lane+Bakehouse'),
     tags: ['pastries', 'neighborhood', 'morning'],
     category: 'cafe',
   },
@@ -122,7 +159,7 @@ export const mockPlaces: MockPlace[] = [
     address: '7-2-18 Nakajima Koen, Chuo-ku, Sapporo',
     latitude: 43.0447,
     longitude: 141.3544,
-    imageUrl: 'https://placehold.co/800x1200?text=River+Snow+Espresso',
+    imageUrl: getMockImage('place-008', 'https://placehold.co/800x1200?text=River+Snow+Espresso'),
     tags: ['modern', 'espresso', 'riverside', 'minimal'],
     category: 'cafe',
   },
@@ -163,7 +200,7 @@ export const mockPlaces: MockPlace[] = [
     address: '9-3-22 Minami 1 Johigashi, Chuo-ku, Sapporo',
     latitude: 43.0588,
     longitude: 141.3645,
-    imageUrl: 'https://placehold.co/800x1200?text=Steam+Pot+Soup+Curry',
+    imageUrl: getMockImage('place-011', 'https://placehold.co/800x1200?text=Steam+Pot+Soup+Curry'),
     tags: ['soup curry', 'spicy', 'vegetables', 'local favorite'],
     category: 'restaurant',
   },
@@ -177,7 +214,7 @@ export const mockPlaces: MockPlace[] = [
     address: '3-5-19 Odorinishi, Chuo-ku, Sapporo',
     latitude: 43.0603,
     longitude: 141.3446,
-    imageUrl: 'https://placehold.co/800x1200?text=Aurora+Window+Dining',
+    imageUrl: getMockImage('place-012', 'https://placehold.co/800x1200?text=Aurora+Window+Dining'),
     tags: ['date night', 'quiet', 'views', 'modern dining'],
     category: 'restaurant',
   },
@@ -190,7 +227,7 @@ export const mockPlaces: MockPlace[] = [
     address: '5-9-7 Minami 3 Jonishi, Chuo-ku, Sapporo',
     latitude: 43.0566,
     longitude: 141.3503,
-    imageUrl: 'https://placehold.co/800x1200?text=Birch+Path+Tea+Room',
+    imageUrl: getMockImage('place-013', 'https://placehold.co/800x1200?text=Birch+Path+Tea+Room'),
     tags: ['tea', 'desserts', 'quiet escape', 'second floor'],
     category: 'cafe',
   },
@@ -217,7 +254,7 @@ export const mockPlaces: MockPlace[] = [
     address: '12-2-6 Kita 3 Jonishi, Chuo-ku, Sapporo',
     latitude: 43.0637,
     longitude: 141.3391,
-    imageUrl: 'https://placehold.co/800x1200?text=Spruce+%26+Stone+Cafe',
+    imageUrl: getMockImage('place-015', 'https://placehold.co/800x1200?text=Spruce+%26+Stone+Cafe'),
     tags: ['cheesecake', 'design', 'coffee break', 'comfortable'],
     category: 'cafe',
   },
@@ -258,7 +295,10 @@ export const mockPlaces: MockPlace[] = [
     address: '7-8-4 Kita 7 Jonishi, Kita-ku, Sapporo',
     latitude: 43.0706,
     longitude: 141.3419,
-    imageUrl: 'https://placehold.co/800x1200?text=Charcoal+Alley+Jingisukan',
+    imageUrl: getMockImage(
+      'place-018',
+      'https://placehold.co/800x1200?text=Charcoal+Alley+Jingisukan',
+    ),
     tags: ['jingisukan', 'grill', 'group dinner', 'local specialty'],
     category: 'restaurant',
   },
@@ -284,7 +324,7 @@ export const mockPlaces: MockPlace[] = [
     address: '1-17 Moiwa, Minami-ku, Sapporo',
     latitude: 43.0284,
     longitude: 141.3412,
-    imageUrl: 'https://placehold.co/800x1200?text=Snowcap+Park+Espresso',
+    imageUrl: getMockImage('place-020', 'https://placehold.co/800x1200?text=Snowcap+Park+Espresso'),
     tags: ['park', 'coffee', 'family friendly', 'open air'],
     category: 'cafe',
   },

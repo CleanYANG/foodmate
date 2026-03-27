@@ -1,3 +1,5 @@
+import type { ImageSourcePropType } from 'react-native';
+
 export type PlaceCategory = 'restaurant' | 'cafe' | 'bar' | 'on_mars' | 'place';
 
 export type Place = {
@@ -8,7 +10,7 @@ export type Place = {
   address: string;
   latitude: number | null;
   longitude: number | null;
-  imageUrl: string;
+  imageUrl: string | ImageSourcePropType;
   tags: string[];
   category: PlaceCategory;
   city: string | null;

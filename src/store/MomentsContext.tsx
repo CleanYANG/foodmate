@@ -100,7 +100,7 @@ export function MomentsProvider({ children }: PropsWithChildren) {
         placeId: place.id,
         city: place.city ?? 'Sapporo',
         placeName: place.name,
-        placeImageUrl: place.imageUrl,
+        placeImageUrl: typeof place.imageUrl === 'string' ? place.imageUrl : null,
         userImageUrl: null,
         text: trimmedText,
         createdAt: new Date().toISOString(),

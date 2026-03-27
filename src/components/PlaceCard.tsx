@@ -13,46 +13,61 @@ type PlaceCardProps = {
   onPressDetails: () => void;
 };
 
+function getImageSource(imageUrl: Place['imageUrl']) {
+  return typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl;
+}
+
 export function PlaceCard({ place, onPressDetails }: PlaceCardProps) {
   return (
-    <ImageBackground source={{ uri: place.imageUrl }} style={styles.card} imageStyle={styles.image}>
-      <View style={styles.overlay} />
-      <View style={styles.content}>
-        <View style={styles.textBlock}>
-          <Text numberOfLines={2} style={styles.title}>
-            {place.name}
-          </Text>
-          <Text numberOfLines={3} style={styles.description}>
-            {place.shortReview}
-          </Text>
-        </View>
-
-        {place.tags.length > 0 ? (
-          <View style={styles.tagsRow}>
-            {place.tags.slice(0, 3).map((tag) => (
-              <Tag key={tag} label={formatTagLabel(tag)} />
-            ))}
+    <View style={styles.frame}>
+      <ImageBackground
+        source={getImageSource(place.imageUrl)}
+        style={styles.card}
+        imageStyle={styles.image}
+      >
+        <View style={styles.overlay} />
+        <View style={styles.content}>
+          <View style={styles.textBlock}>
+            <Text numberOfLines={2} style={styles.title}>
+              {place.name}
+            </Text>
+            <Text numberOfLines={3} style={styles.description}>
+              {place.shortReview}
+            </Text>
           </View>
-        ) : null}
 
-        <Button variant="secondary" onPress={onPressDetails} style={styles.button}>
-          Details
-        </Button>
-      </View>
-    </ImageBackground>
+          {place.tags.length > 0 ? (
+            <View style={styles.tagsRow}>
+              {place.tags.slice(0, 3).map((tag) => (
+                <Tag key={tag} label={formatTagLabel(tag)} />
+              ))}
+            </View>
+          ) : null}
+
+          <Button variant="secondary" onPress={onPressDetails} style={styles.button}>
+            Details
+          </Button>
+        </View>
+      </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  frame: {
+    aspectRatio: 4 / 5,
     borderRadius: 32,
     flex: 1,
     minHeight: 0,
     overflow: 'hidden',
+  },
+  card: {
+    flex: 1,
     justifyContent: 'flex-end',
   },
   image: {
     borderRadius: 32,
+    resizeMode: 'cover',
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,

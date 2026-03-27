@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, type ImageSourcePropType, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { formatCategoryLabel } from '../config/discoveryRail';
@@ -22,6 +22,10 @@ import { typography } from '../theme/typography';
 import type { Place } from '../types/place';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SavedPlaces'>;
+
+function getImageSource(imageUrl: Place['imageUrl']): ImageSourcePropType {
+  return typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl;
+}
 
 function toErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -143,7 +147,7 @@ export function SavedPlacesScreen({ navigation }: Props) {
 
         {savedPlaces.map((place) => (
           <Card key={place.id} style={styles.placeCard}>
-            <Image source={{ uri: place.imageUrl }} style={styles.placeImage} />
+            <Image source={getImageSource(place.imageUrl)} style={styles.placeImage} />
 
             <View style={styles.placeBody}>
               <Tag label={formatCategoryLabel(place.category)} tone="primary" />

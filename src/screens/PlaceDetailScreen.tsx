@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  type ImageSourcePropType,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { Button } from '../components/Button';
@@ -25,6 +34,10 @@ function toErrorMessage(error: unknown) {
   }
 
   return 'Something went wrong while loading this place.';
+}
+
+function getImageSource(imageUrl: Place['imageUrl']): ImageSourcePropType {
+  return typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl;
 }
 
 function formatPrice(place: Place) {
@@ -172,7 +185,7 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
   return (
     <Screen padded={false}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Image source={{ uri: place.imageUrl }} style={styles.heroImage} />
+        <Image source={getImageSource(place.imageUrl)} style={styles.heroImage} />
         <View style={styles.heroImageOverlay} />
 
         <View style={styles.body}>
