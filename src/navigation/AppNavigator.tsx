@@ -34,7 +34,7 @@ export function AppNavigator() {
         },
       }}
     >
-      <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'CityTalk' }} />
+      <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="PlaceDetail"
         component={PlaceDetailScreen}

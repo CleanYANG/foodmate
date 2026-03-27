@@ -1,6 +1,6 @@
 import type { PlaceCategory } from '../types/place';
 
-export type DiscoveryFilterId = 'all' | PlaceCategory;
+export type DiscoveryFilterId = Extract<PlaceCategory, 'restaurant' | 'cafe' | 'bar' | 'on_mars'>;
 
 export type DiscoveryRailItem = {
   id: DiscoveryFilterId;
@@ -9,10 +9,9 @@ export type DiscoveryRailItem = {
 };
 
 export const discoveryRailItems: DiscoveryRailItem[] = [
-  { id: 'all', label: 'All', icon: '🌍' },
   { id: 'restaurant', label: 'Restaurant', icon: '🍽️' },
-  { id: 'cafe', label: 'Cafe', icon: '☕' },
   { id: 'bar', label: 'Bar', icon: '🍸' },
+  { id: 'cafe', label: 'Cafe', icon: '☕' },
   { id: 'on_mars', label: 'On Mars', icon: '🚀' },
 ];
 
