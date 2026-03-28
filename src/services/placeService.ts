@@ -6,6 +6,18 @@ import { supabase } from '../lib/supabase';
 import type { Place, PlaceCategory, SavedPlace } from '../types/place';
 import type { PlaceReview } from '../types/review';
 
+import cafe1 from '../../assets/cafe_1.jpeg';
+import cafe2 from '../../assets/cafe_2.jpeg';
+import cafe3 from '../../assets/cafe_3.jpeg';
+import cafe4 from '../../assets/cafe_4.jpeg';
+import cafe5 from '../../assets/cafe_5.jpeg';
+import cafe6 from '../../assets/cafe_6.jpeg';
+import restaurant1 from '../../assets/restaurant_1.jpeg';
+import restaurant2 from '../../assets/restaurant_2.jpeg';
+import restaurant4 from '../../assets/restaurant_4.jpeg';
+import restaurant5 from '../../assets/restaurant_5.jpeg';
+import restaurant3 from '../../assets/resturant_3.jpeg';
+
 type PlaceRow = {
   id: string;
   name: string;
@@ -42,6 +54,53 @@ type ReviewRow = {
       }[]
     | null;
 };
+
+const cafeImages = [cafe1, cafe2, cafe3, cafe4, cafe5, cafe6] as const;
+const restaurantImages = [restaurant1, restaurant2, restaurant3, restaurant4, restaurant5] as const;
+
+const directAssetImageByName: Partial<Record<string, Place['imageUrl']>> = {
+  cafe_1: cafe1,
+  cafe_2: cafe2,
+  cafe_3: cafe3,
+  cafe_4: cafe4,
+  cafe_5: cafe5,
+  cafe_6: cafe6,
+  restaurant_1: restaurant1,
+  restaurant_2: restaurant2,
+  restaurant_3: restaurant3,
+  restaurant_4: restaurant4,
+  restaurant_5: restaurant5,
+};
+
+function normalizeAssetKey(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function getLocalImageForPlace(
+  place: Pick<Place, 'name' | 'category'>,
+  categoryIndex: number,
+): Place['imageUrl'] | undefined {
+  const directNameMatch = directAssetImageByName[normalizeAssetKey(place.name)];
+
+  if (directNameMatch) {
+    return directNameMatch;
+  }
+
+  if (place.category === 'cafe') {
+    return cafeImages[categoryIndex % cafeImages.length];
+  }
+
+  if (place.category === 'restaurant') {
+    return restaurantImages[categoryIndex % restaurantImages.length];
+  }
+
+  return undefined;
+}
 
 function inferCategory(place: Pick<Place, 'tags' | 'name'>): PlaceCategory {
   const normalized = [...place.tags, place.name].join(' ').toLowerCase();
@@ -95,7 +154,7 @@ function inferCategory(place: Pick<Place, 'tags' | 'name'>): PlaceCategory {
   return 'place';
 }
 
-function mapPlaceRow(placeRow: PlaceRow): Place {
+function mapPlaceRow(placeRow: PlaceRow, categoryIndex: number): Place {
   const place: Place = {
     id: placeRow.id,
     name: placeRow.name,
@@ -120,6 +179,11 @@ function mapPlaceRow(placeRow: PlaceRow): Place {
       ? placeRow.category
       : inferCategory(place);
 
+  place.imageUrl =
+    getLocalImageForPlace(place, categoryIndex) ??
+    placeRow.image_url ??
+    'https://placehold.co/800x1200?text=CityTalk+Place';
+
   return place;
 }
 
@@ -138,9 +202,10 @@ function mapReviewRow(reviewRow: ReviewRow): PlaceReview {
   };
 }
 
-function mapMockPlace(place: (typeof mockPlaces)[number]): Place {
+function mapMockPlace(place: (typeof mockPlaces)[number], categoryIndex: number): Place {
   return {
     ...place,
+    imageUrl: getLocalImageForPlace(place, categoryIndex) ?? place.imageUrl,
     tags: sortTags(place.tags),
     city: 'Sapporo',
     country: 'Japan',
@@ -149,7 +214,13 @@ function mapMockPlace(place: (typeof mockPlaces)[number]): Place {
 
 export async function fetchPlaces(): Promise<Place[]> {
   if (env.useMockData) {
-    return mockPlaces.map(mapMockPlace);
+    const categoryCounts: Partial<Record<PlaceCategory, number>> = {};
+
+    return mockPlaces.map((place) => {
+      const categoryIndex = categoryCounts[place.category] ?? 0;
+      categoryCounts[place.category] = categoryIndex + 1;
+      return mapMockPlace(place, categoryIndex);
+    });
   }
 
   const { data, error } = await supabase
@@ -163,13 +234,43 @@ export async function fetchPlaces(): Promise<Place[]> {
     throw error;
   }
 
-  return (data ?? []).map(mapPlaceRow);
+  const categoryCounts: Partial<Record<PlaceCategory, number>> = {};
+
+  return (data ?? []).map((placeRow) => {
+    let rawCategory: PlaceCategory | undefined;
+
+    if (
+      placeRow.category === 'restaurant' ||
+      placeRow.category === 'cafe' ||
+      placeRow.category === 'bar' ||
+      placeRow.category === 'on_mars'
+    ) {
+      rawCategory = placeRow.category;
+    }
+
+    const categoryIndex = rawCategory ? (categoryCounts[rawCategory] ?? 0) : 0;
+
+    if (rawCategory) {
+      categoryCounts[rawCategory] = categoryIndex + 1;
+    }
+
+    return mapPlaceRow(placeRow, categoryIndex);
+  });
 }
 
 export async function fetchPlaceById(placeId: string): Promise<Place | null> {
   if (env.useMockData) {
     const place = mockPlaces.find((item) => item.id === placeId);
-    return place ? mapMockPlace(place) : null;
+
+    if (!place) {
+      return null;
+    }
+
+    const categoryIndex = mockPlaces
+      .filter((item) => item.category === place.category)
+      .findIndex((item) => item.id === place.id);
+
+    return mapMockPlace(place, Math.max(categoryIndex, 0));
   }
 
   const { data, error } = await supabase
@@ -184,7 +285,7 @@ export async function fetchPlaceById(placeId: string): Promise<Place | null> {
     throw error;
   }
 
-  return data ? mapPlaceRow(data) : null;
+  return data ? mapPlaceRow(data, 0) : null;
 }
 
 export async function fetchSavedPlaces(): Promise<SavedPlace[]> {
