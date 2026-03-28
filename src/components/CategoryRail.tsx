@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { discoveryRailItems, type DiscoveryFilterId } from '../config/discoveryRail';
 import { colors } from '../theme/colors';
@@ -6,43 +6,32 @@ import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 
 type CategoryRailProps = {
-  collapsedWidth: number;
-  expanded: boolean;
-  expandedWidth: number;
-  height: number;
+  compact: boolean;
+  maxWidth?: number;
   selectedCategory: DiscoveryFilterId;
-  onToggleExpanded: () => void;
   onSelect: (category: DiscoveryFilterId) => void;
   onPressSavedForLater: () => void;
   onPressMyMoment: () => void;
 };
 
 export function CategoryRail({
-  collapsedWidth,
-  expanded,
-  expandedWidth,
-  height,
+  compact,
+  maxWidth,
   selectedCategory,
-  onToggleExpanded,
   onSelect,
   onPressSavedForLater,
   onPressMyMoment,
 }: CategoryRailProps) {
   return (
-    <Pressable
-      accessibilityLabel={expanded ? 'Collapse category rail' : 'Expand category rail'}
-      accessibilityRole="button"
-      onPress={onToggleExpanded}
-      style={[
-        styles.rail,
-        expanded ? styles.railExpanded : styles.railCollapsed,
-        {
-          width: expanded ? expandedWidth : collapsedWidth,
-          height,
-        },
-      ]}
-    >
-      <View style={styles.topSection}>
+    <View style={[styles.shell, maxWidth ? { maxWidth } : null]}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.content,
+          compact ? styles.contentCompact : styles.contentRegular,
+        ]}
+      >
         {discoveryRailItems.map((item) => {
           const selected = item.id === selectedCategory;
 
@@ -51,126 +40,111 @@ export function CategoryRail({
               key={item.id}
               accessibilityLabel={item.label}
               accessibilityRole="button"
-              onPress={(event) => {
-                event.stopPropagation();
-                onSelect(item.id);
-              }}
+              onPress={() => onSelect(item.id)}
               style={[
                 styles.item,
-                expanded ? styles.itemExpanded : styles.itemCollapsed,
+                compact ? styles.itemCompact : styles.itemRegular,
                 selected ? styles.itemSelected : null,
               ]}
             >
               <Text style={styles.icon}>{item.icon}</Text>
-              {expanded ? (
-                <Text
-                  numberOfLines={1}
-                  style={[styles.label, selected ? styles.labelSelected : null]}
-                >
-                  {item.label}
-                </Text>
-              ) : null}
+              <Text style={[styles.label, selected ? styles.labelSelected : null]}>
+                {item.label}
+              </Text>
             </Pressable>
           );
         })}
-      </View>
 
-      <View style={styles.bottomSection}>
-        <View style={styles.divider} />
+        <View style={styles.utilityDivider} />
+
         <Pressable
           accessibilityLabel="Saved for later"
           accessibilityRole="button"
-          onPress={(event) => {
-            event.stopPropagation();
-            onPressSavedForLater();
-          }}
-          style={[styles.item, expanded ? styles.itemExpanded : styles.itemCollapsed]}
+          onPress={onPressSavedForLater}
+          style={[styles.item, compact ? styles.itemCompact : styles.itemRegular]}
         >
           <Text style={styles.icon}>⭐</Text>
-          {expanded ? <Text style={styles.label}>Saved for later</Text> : null}
+          <Text style={styles.label}>Saved</Text>
         </Pressable>
+
         <Pressable
           accessibilityLabel="My Moment"
           accessibilityRole="button"
-          onPress={(event) => {
-            event.stopPropagation();
-            onPressMyMoment();
-          }}
-          style={[styles.item, expanded ? styles.itemExpanded : styles.itemCollapsed]}
+          onPress={onPressMyMoment}
+          style={[styles.item, compact ? styles.itemCompact : styles.itemRegular]}
         >
           <Text style={styles.icon}>📝</Text>
-          {expanded ? <Text style={styles.label}>My Moment</Text> : null}
+          <Text style={styles.label}>My Moment</Text>
         </Pressable>
-      </View>
-    </Pressable>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  rail: {
+  shell: {
     alignSelf: 'center',
     backgroundColor: colors.surface,
     borderColor: colors.border,
     borderRadius: 24,
     borderWidth: 1,
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
     shadowColor: '#2C221B',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.04,
     shadowRadius: 18,
+    width: '100%',
   },
-  railCollapsed: {
-    paddingHorizontal: 4,
+  content: {
+    alignItems: 'center',
   },
-  railExpanded: {
+  contentCompact: {
+    gap: spacing.xs,
     paddingHorizontal: spacing.sm,
-  },
-  topSection: {
-    gap: spacing.xs,
-  },
-  bottomSection: {
-    gap: spacing.xs,
-    paddingTop: spacing.sm,
-  },
-  divider: {
-    backgroundColor: colors.border,
-    borderRadius: 999,
-    height: 1,
-    marginHorizontal: 8,
-  },
-  item: {
-    borderRadius: 18,
-    minHeight: 48,
     paddingVertical: spacing.sm,
   },
-  itemCollapsed: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 2,
-  },
-  itemExpanded: {
-    alignItems: 'center',
-    flexDirection: 'row',
+  contentRegular: {
     gap: spacing.sm,
-    justifyContent: 'flex-start',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  item: {
+    alignItems: 'center',
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: 999,
+    flexDirection: 'row',
+  },
+  itemCompact: {
+    gap: spacing.xs,
+    minHeight: 42,
     paddingHorizontal: spacing.sm,
+    paddingVertical: 9,
+  },
+  itemRegular: {
+    gap: spacing.sm,
+    minHeight: 48,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
   },
   itemSelected: {
     backgroundColor: colors.primarySoft,
   },
   icon: {
-    fontSize: 20,
+    fontSize: 18,
     textAlign: 'center',
-    width: 24,
   },
   label: {
     color: colors.textSoft,
-    flex: 1,
     fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.caption,
   },
   labelSelected: {
     color: colors.primary,
+  },
+  utilityDivider: {
+    backgroundColor: colors.border,
+    borderRadius: 999,
+    height: 22,
+    marginHorizontal: spacing.xs,
+    width: 1,
   },
 });

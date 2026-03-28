@@ -27,12 +27,9 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 type DiscoverLayoutConfig = {
   pagePadding: number;
-  contentGap: number;
-  railCollapsedWidth: number;
-  railExpandedWidth: number;
-  railHeightRatio: number;
-  railMinHeight: number;
-  railMaxHeight?: number;
+  sectionGap: number;
+  categoryBarMaxWidth?: number;
+  categoryBarMinHeight: number;
   cardAreaUsage: number;
   cardWidthRatio: number;
   cardAspectRatio: number;
@@ -54,93 +51,77 @@ function getDiscoverLayoutConfig(windowWidth: number): DiscoverLayoutConfig {
   if (windowWidth >= 1440) {
     return {
       pagePadding: 32,
-      contentGap: 26,
-      railCollapsedWidth: 58,
-      railExpandedWidth: 168,
-      railHeightRatio: 0.72,
-      railMinHeight: 430,
-      railMaxHeight: 580,
-      cardAreaUsage: 0.84,
-      cardWidthRatio: 0.84,
+      sectionGap: 24,
+      categoryBarMaxWidth: 980,
+      categoryBarMinHeight: 76,
+      cardAreaUsage: 0.88,
+      cardWidthRatio: 0.86,
       cardAspectRatio: 0.84,
       cardMinHeight: 580,
-      cardMinWidth: 500,
-      cardMaxWidth: 760,
-      cardMaxHeight: 860,
+      cardMinWidth: 520,
+      cardMaxWidth: 820,
+      cardMaxHeight: 880,
     };
   }
 
   if (windowWidth >= 1280) {
     return {
       pagePadding: 28,
-      contentGap: 24,
-      railCollapsedWidth: 58,
-      railExpandedWidth: 168,
-      railHeightRatio: 0.72,
-      railMinHeight: 420,
-      railMaxHeight: 560,
-      cardAreaUsage: 0.82,
-      cardWidthRatio: 0.82,
+      sectionGap: 22,
+      categoryBarMaxWidth: 920,
+      categoryBarMinHeight: 74,
+      cardAreaUsage: 0.86,
+      cardWidthRatio: 0.84,
       cardAspectRatio: 0.83,
-      cardMinHeight: 560,
+      cardMinHeight: 540,
       cardMinWidth: 460,
-      cardMaxWidth: 700,
-      cardMaxHeight: 800,
+      cardMaxWidth: 740,
+      cardMaxHeight: 820,
     };
   }
 
   if (windowWidth >= 1024) {
     return {
       pagePadding: 24,
-      contentGap: 20,
-      railCollapsedWidth: 56,
-      railExpandedWidth: 160,
-      railHeightRatio: 0.74,
-      railMinHeight: 400,
-      railMaxHeight: 540,
-      cardAreaUsage: 0.8,
-      cardWidthRatio: 0.8,
+      sectionGap: 20,
+      categoryBarMaxWidth: 860,
+      categoryBarMinHeight: 72,
+      cardAreaUsage: 0.84,
+      cardWidthRatio: 0.82,
       cardAspectRatio: 0.82,
       cardMinHeight: 500,
       cardMinWidth: 420,
-      cardMaxWidth: 620,
-      cardMaxHeight: 740,
+      cardMaxWidth: 660,
+      cardMaxHeight: 760,
     };
   }
 
   if (windowWidth >= 768) {
     return {
       pagePadding: 20,
-      contentGap: 16,
-      railCollapsedWidth: 52,
-      railExpandedWidth: 150,
-      railHeightRatio: 0.73,
-      railMinHeight: 360,
-      railMaxHeight: 500,
-      cardAreaUsage: 0.84,
-      cardWidthRatio: 0.84,
+      sectionGap: 18,
+      categoryBarMaxWidth: 680,
+      categoryBarMinHeight: 68,
+      cardAreaUsage: 0.88,
+      cardWidthRatio: 0.86,
       cardAspectRatio: 0.8,
       cardMinHeight: 450,
       cardMinWidth: 340,
-      cardMaxWidth: 500,
+      cardMaxWidth: 520,
       cardMaxHeight: 660,
     };
   }
 
   return {
     pagePadding: 16,
-    contentGap: 12,
-    railCollapsedWidth: 46,
-    railExpandedWidth: 136,
-    railHeightRatio: 0.7,
-    railMinHeight: 320,
-    railMaxHeight: 430,
-    cardAreaUsage: 0.9,
-    cardWidthRatio: 0.9,
+    sectionGap: 14,
+    categoryBarMinHeight: 62,
+    cardAreaUsage: 0.94,
+    cardWidthRatio: 0.92,
     cardAspectRatio: 0.76,
     cardMinHeight: 400,
     cardMinWidth: 250,
-    cardMaxWidth: 420,
+    cardMaxWidth: 430,
     cardMaxHeight: 540,
   };
 }
@@ -174,7 +155,6 @@ export function HomeScreen({ navigation }: Props) {
     on_mars: 0,
   });
   const [feedback, setFeedback] = useState<'skip' | 'save' | null>(null);
-  const [isRailExpanded, setIsRailExpanded] = useState(false);
   const [swipeFeedbackMessage, setSwipeFeedbackMessage] = useState<string | null>(null);
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
   const [placesError, setPlacesError] = useState<string | null>(null);
@@ -185,28 +165,30 @@ export function HomeScreen({ navigation }: Props) {
   const swipeOutDistance = windowWidth * 1.15;
 
   const layout = useMemo(() => getDiscoverLayoutConfig(windowWidth), [windowWidth]);
-  const maxCardAreaWidth = Math.max(
-    windowWidth - layout.pagePadding * 2 - layout.contentGap - layout.railCollapsedWidth,
-    layout.cardMinWidth,
+  const compactTopBar = windowWidth < 768;
+  const contentWidth = Math.max(windowWidth - layout.pagePadding * 2, layout.cardMinWidth);
+  const cardAreaWidth = contentWidth * layout.cardAreaUsage;
+  const availableCardHeight = Math.max(
+    windowHeight - layout.pagePadding * 2 - layout.categoryBarMinHeight - layout.sectionGap,
+    layout.cardMinHeight,
   );
-  const usableCardAreaWidth = maxCardAreaWidth * layout.cardAreaUsage;
-  const availableCardHeight = Math.max(windowHeight - layout.pagePadding * 2, layout.cardMinHeight);
   const heightBoundWidth = (layout.cardMaxHeight ?? availableCardHeight) * layout.cardAspectRatio;
   const preferredCardWidth = Math.min(
-    Math.max(usableCardAreaWidth * layout.cardWidthRatio, layout.cardMinWidth),
+    Math.max(cardAreaWidth * layout.cardWidthRatio, layout.cardMinWidth),
     layout.cardMaxWidth ?? Number.POSITIVE_INFINITY,
-    maxCardAreaWidth,
+    contentWidth,
     heightBoundWidth,
   );
-  const cardWidth = Math.max(preferredCardWidth, Math.min(layout.cardMinWidth, maxCardAreaWidth));
+  const cardWidth = Math.max(preferredCardWidth, Math.min(layout.cardMinWidth, contentWidth));
   const cardHeight = Math.min(
     Math.max(cardWidth / layout.cardAspectRatio, layout.cardMinHeight),
     layout.cardMaxHeight ?? availableCardHeight,
     availableCardHeight,
   );
-  const railHeight = Math.min(
-    Math.max(cardHeight * layout.railHeightRatio, layout.railMinHeight),
-    layout.railMaxHeight ?? Number.POSITIVE_INFINITY,
+  const categoryBarWidth = Math.min(
+    Math.max(cardWidth, 0),
+    layout.categoryBarMaxWidth ?? contentWidth,
+    contentWidth,
   );
 
   useEffect(() => {
@@ -366,31 +348,19 @@ export function HomeScreen({ navigation }: Props) {
         style={[
           styles.container,
           {
-            gap: layout.contentGap,
+            gap: layout.sectionGap,
             paddingHorizontal: layout.pagePadding,
             paddingVertical: layout.pagePadding,
           },
         ]}
       >
         <CategoryRail
-          collapsedWidth={layout.railCollapsedWidth}
-          expanded={isRailExpanded}
-          expandedWidth={layout.railExpandedWidth}
-          height={railHeight}
+          compact={compactTopBar}
+          maxWidth={categoryBarWidth}
           selectedCategory={selectedCategory}
-          onToggleExpanded={() => setIsRailExpanded((currentValue) => !currentValue)}
-          onSelect={(category) => {
-            setSelectedCategory(category);
-            setIsRailExpanded(false);
-          }}
-          onPressSavedForLater={() => {
-            setIsRailExpanded(false);
-            navigation.navigate('SavedPlaces');
-          }}
-          onPressMyMoment={() => {
-            setIsRailExpanded(false);
-            navigation.navigate('MyMoment');
-          }}
+          onSelect={(category) => setSelectedCategory(category)}
+          onPressSavedForLater={() => navigation.navigate('SavedPlaces')}
+          onPressMyMoment={() => navigation.navigate('MyMoment')}
         />
 
         <View style={styles.cardArea}>
@@ -465,10 +435,8 @@ export function HomeScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
     backgroundColor: colors.background,
     flex: 1,
-    flexDirection: 'row',
   },
   cardArea: {
     alignItems: 'center',
