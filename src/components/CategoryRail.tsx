@@ -9,6 +9,7 @@ type CategoryRailProps = {
   collapsedWidth: number;
   expanded: boolean;
   expandedWidth: number;
+  height: number;
   selectedCategory: DiscoveryFilterId;
   onToggleExpanded: () => void;
   onSelect: (category: DiscoveryFilterId) => void;
@@ -20,6 +21,7 @@ export function CategoryRail({
   collapsedWidth,
   expanded,
   expandedWidth,
+  height,
   selectedCategory,
   onToggleExpanded,
   onSelect,
@@ -34,7 +36,10 @@ export function CategoryRail({
       style={[
         styles.rail,
         expanded ? styles.railExpanded : styles.railCollapsed,
-        { width: expanded ? expandedWidth : collapsedWidth },
+        {
+          width: expanded ? expandedWidth : collapsedWidth,
+          height,
+        },
       ]}
     >
       <View style={styles.topSection}>
@@ -103,12 +108,17 @@ export function CategoryRail({
 
 const styles = StyleSheet.create({
   rail: {
+    alignSelf: 'center',
     backgroundColor: colors.surface,
     borderColor: colors.border,
     borderRadius: 24,
     borderWidth: 1,
     justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
+    shadowColor: '#2C221B',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 18,
   },
   railCollapsed: {
     paddingHorizontal: 4,
@@ -117,10 +127,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
   topSection: {
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   bottomSection: {
-    gap: spacing.sm,
+    gap: spacing.xs,
     paddingTop: spacing.sm,
   },
   divider: {
@@ -131,7 +141,7 @@ const styles = StyleSheet.create({
   },
   item: {
     borderRadius: 18,
-    minHeight: 56,
+    minHeight: 48,
     paddingVertical: spacing.sm,
   },
   itemCollapsed: {

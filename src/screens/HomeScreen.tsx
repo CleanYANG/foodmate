@@ -30,8 +30,12 @@ type DiscoverLayoutConfig = {
   contentGap: number;
   railCollapsedWidth: number;
   railExpandedWidth: number;
+  railHeightRatio: number;
+  railMinHeight: number;
+  railMaxHeight?: number;
   cardWidthRatio: number;
-  cardHeightRatio: number;
+  cardAspectRatio: number;
+  cardMinHeight: number;
   cardMaxWidth?: number;
   cardMaxHeight?: number;
 };
@@ -45,16 +49,37 @@ function toErrorMessage(error: unknown) {
 }
 
 function getDiscoverLayoutConfig(windowWidth: number): DiscoverLayoutConfig {
+  if (windowWidth >= 1280) {
+    return {
+      pagePadding: 28,
+      contentGap: 24,
+      railCollapsedWidth: 58,
+      railExpandedWidth: 168,
+      railHeightRatio: 0.72,
+      railMinHeight: 420,
+      railMaxHeight: 560,
+      cardWidthRatio: 0.74,
+      cardAspectRatio: 0.82,
+      cardMinHeight: 560,
+      cardMaxWidth: 620,
+      cardMaxHeight: 760,
+    };
+  }
+
   if (windowWidth >= 1024) {
     return {
       pagePadding: 24,
       contentGap: 20,
       railCollapsedWidth: 56,
       railExpandedWidth: 160,
+      railHeightRatio: 0.74,
+      railMinHeight: 400,
+      railMaxHeight: 540,
       cardWidthRatio: 0.76,
-      cardHeightRatio: 0.72,
-      cardMaxWidth: 620,
-      cardMaxHeight: 760,
+      cardAspectRatio: 0.82,
+      cardMinHeight: 520,
+      cardMaxWidth: 580,
+      cardMaxHeight: 720,
     };
   }
 
@@ -64,18 +89,28 @@ function getDiscoverLayoutConfig(windowWidth: number): DiscoverLayoutConfig {
       contentGap: 16,
       railCollapsedWidth: 52,
       railExpandedWidth: 150,
-      cardWidthRatio: 0.84,
-      cardHeightRatio: 0.73,
+      railHeightRatio: 0.73,
+      railMinHeight: 360,
+      railMaxHeight: 500,
+      cardWidthRatio: 0.8,
+      cardAspectRatio: 0.81,
+      cardMinHeight: 470,
+      cardMaxHeight: 660,
     };
   }
 
   return {
     pagePadding: 16,
     contentGap: 12,
-    railCollapsedWidth: 48,
-    railExpandedWidth: 140,
-    cardWidthRatio: 0.88,
-    cardHeightRatio: 0.7,
+    railCollapsedWidth: 46,
+    railExpandedWidth: 136,
+    railHeightRatio: 0.7,
+    railMinHeight: 320,
+    railMaxHeight: 430,
+    cardWidthRatio: 0.84,
+    cardAspectRatio: 0.8,
+    cardMinHeight: 420,
+    cardMaxHeight: 560,
   };
 }
 
@@ -123,13 +158,23 @@ export function HomeScreen({ navigation }: Props) {
     windowWidth - layout.pagePadding * 2 - layout.contentGap - layout.railCollapsedWidth,
     240,
   );
-  const cardWidth = Math.min(
+  const availableCardHeight = Math.max(windowHeight - layout.pagePadding * 2, layout.cardMinHeight);
+  const preferredCardWidth = Math.min(
     availableContentWidth * layout.cardWidthRatio,
     layout.cardMaxWidth ?? Number.POSITIVE_INFINITY,
   );
+  const cardWidth = Math.min(
+    preferredCardWidth,
+    (layout.cardMaxHeight ?? availableCardHeight) * layout.cardAspectRatio,
+  );
   const cardHeight = Math.min(
-    Math.max(windowHeight * layout.cardHeightRatio, 420),
-    layout.cardMaxHeight ?? Number.POSITIVE_INFINITY,
+    Math.max(cardWidth / layout.cardAspectRatio, layout.cardMinHeight),
+    layout.cardMaxHeight ?? availableCardHeight,
+    availableCardHeight,
+  );
+  const railHeight = Math.min(
+    Math.max(cardHeight * layout.railHeightRatio, layout.railMinHeight),
+    layout.railMaxHeight ?? Number.POSITIVE_INFINITY,
   );
 
   useEffect(() => {
@@ -299,6 +344,7 @@ export function HomeScreen({ navigation }: Props) {
           collapsedWidth={layout.railCollapsedWidth}
           expanded={isRailExpanded}
           expandedWidth={layout.railExpandedWidth}
+          height={railHeight}
           selectedCategory={selectedCategory}
           onToggleExpanded={() => setIsRailExpanded((currentValue) => !currentValue)}
           onSelect={(category) => {
@@ -387,6 +433,7 @@ export function HomeScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: 'center',
     backgroundColor: colors.background,
     flex: 1,
     flexDirection: 'row',
