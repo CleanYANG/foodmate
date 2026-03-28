@@ -33,9 +33,11 @@ type DiscoverLayoutConfig = {
   railHeightRatio: number;
   railMinHeight: number;
   railMaxHeight?: number;
+  cardAreaUsage: number;
   cardWidthRatio: number;
   cardAspectRatio: number;
   cardMinHeight: number;
+  cardMinWidth: number;
   cardMaxWidth?: number;
   cardMaxHeight?: number;
 };
@@ -49,6 +51,25 @@ function toErrorMessage(error: unknown) {
 }
 
 function getDiscoverLayoutConfig(windowWidth: number): DiscoverLayoutConfig {
+  if (windowWidth >= 1440) {
+    return {
+      pagePadding: 32,
+      contentGap: 26,
+      railCollapsedWidth: 58,
+      railExpandedWidth: 168,
+      railHeightRatio: 0.72,
+      railMinHeight: 430,
+      railMaxHeight: 580,
+      cardAreaUsage: 0.84,
+      cardWidthRatio: 0.84,
+      cardAspectRatio: 0.84,
+      cardMinHeight: 580,
+      cardMinWidth: 500,
+      cardMaxWidth: 760,
+      cardMaxHeight: 860,
+    };
+  }
+
   if (windowWidth >= 1280) {
     return {
       pagePadding: 28,
@@ -58,11 +79,13 @@ function getDiscoverLayoutConfig(windowWidth: number): DiscoverLayoutConfig {
       railHeightRatio: 0.72,
       railMinHeight: 420,
       railMaxHeight: 560,
-      cardWidthRatio: 0.74,
-      cardAspectRatio: 0.82,
+      cardAreaUsage: 0.82,
+      cardWidthRatio: 0.82,
+      cardAspectRatio: 0.83,
       cardMinHeight: 560,
-      cardMaxWidth: 620,
-      cardMaxHeight: 760,
+      cardMinWidth: 460,
+      cardMaxWidth: 700,
+      cardMaxHeight: 800,
     };
   }
 
@@ -75,11 +98,13 @@ function getDiscoverLayoutConfig(windowWidth: number): DiscoverLayoutConfig {
       railHeightRatio: 0.74,
       railMinHeight: 400,
       railMaxHeight: 540,
-      cardWidthRatio: 0.76,
+      cardAreaUsage: 0.8,
+      cardWidthRatio: 0.8,
       cardAspectRatio: 0.82,
-      cardMinHeight: 520,
-      cardMaxWidth: 580,
-      cardMaxHeight: 720,
+      cardMinHeight: 500,
+      cardMinWidth: 420,
+      cardMaxWidth: 620,
+      cardMaxHeight: 740,
     };
   }
 
@@ -92,9 +117,12 @@ function getDiscoverLayoutConfig(windowWidth: number): DiscoverLayoutConfig {
       railHeightRatio: 0.73,
       railMinHeight: 360,
       railMaxHeight: 500,
-      cardWidthRatio: 0.8,
-      cardAspectRatio: 0.81,
-      cardMinHeight: 470,
+      cardAreaUsage: 0.84,
+      cardWidthRatio: 0.84,
+      cardAspectRatio: 0.8,
+      cardMinHeight: 450,
+      cardMinWidth: 340,
+      cardMaxWidth: 500,
       cardMaxHeight: 660,
     };
   }
@@ -107,10 +135,13 @@ function getDiscoverLayoutConfig(windowWidth: number): DiscoverLayoutConfig {
     railHeightRatio: 0.7,
     railMinHeight: 320,
     railMaxHeight: 430,
-    cardWidthRatio: 0.84,
-    cardAspectRatio: 0.8,
-    cardMinHeight: 420,
-    cardMaxHeight: 560,
+    cardAreaUsage: 0.9,
+    cardWidthRatio: 0.9,
+    cardAspectRatio: 0.76,
+    cardMinHeight: 400,
+    cardMinWidth: 250,
+    cardMaxWidth: 420,
+    cardMaxHeight: 540,
   };
 }
 
@@ -154,19 +185,20 @@ export function HomeScreen({ navigation }: Props) {
   const swipeOutDistance = windowWidth * 1.15;
 
   const layout = useMemo(() => getDiscoverLayoutConfig(windowWidth), [windowWidth]);
-  const availableContentWidth = Math.max(
+  const maxCardAreaWidth = Math.max(
     windowWidth - layout.pagePadding * 2 - layout.contentGap - layout.railCollapsedWidth,
-    240,
+    layout.cardMinWidth,
   );
+  const usableCardAreaWidth = maxCardAreaWidth * layout.cardAreaUsage;
   const availableCardHeight = Math.max(windowHeight - layout.pagePadding * 2, layout.cardMinHeight);
+  const heightBoundWidth = (layout.cardMaxHeight ?? availableCardHeight) * layout.cardAspectRatio;
   const preferredCardWidth = Math.min(
-    availableContentWidth * layout.cardWidthRatio,
+    Math.max(usableCardAreaWidth * layout.cardWidthRatio, layout.cardMinWidth),
     layout.cardMaxWidth ?? Number.POSITIVE_INFINITY,
+    maxCardAreaWidth,
+    heightBoundWidth,
   );
-  const cardWidth = Math.min(
-    preferredCardWidth,
-    (layout.cardMaxHeight ?? availableCardHeight) * layout.cardAspectRatio,
-  );
+  const cardWidth = Math.max(preferredCardWidth, Math.min(layout.cardMinWidth, maxCardAreaWidth));
   const cardHeight = Math.min(
     Math.max(cardWidth / layout.cardAspectRatio, layout.cardMinHeight),
     layout.cardMaxHeight ?? availableCardHeight,

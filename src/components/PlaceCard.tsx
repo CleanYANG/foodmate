@@ -1,4 +1,4 @@
-import { ImageBackground, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { Button } from './Button';
 import { Tag } from './Tag';
@@ -18,33 +18,71 @@ function getImageSource(imageUrl: Place['imageUrl']) {
 }
 
 export function PlaceCard({ place, onPressDetails }: PlaceCardProps) {
+  const { width: windowWidth } = useWindowDimensions();
+  const compact = windowWidth < 768;
+  const spacious = windowWidth >= 1280;
+
   return (
-    <View style={styles.frame}>
+    <View
+      style={[
+        styles.frame,
+        compact ? styles.frameCompact : null,
+        spacious ? styles.frameSpacious : null,
+      ]}
+    >
       <ImageBackground
         source={getImageSource(place.imageUrl)}
         style={styles.card}
         imageStyle={styles.image}
       >
-        <View style={styles.overlay} />
-        <View style={styles.content}>
-          <View style={styles.textBlock}>
-            <Text numberOfLines={2} style={styles.title}>
+        <View style={[styles.overlay, compact ? styles.overlayCompact : null]} />
+        <View
+          style={[
+            styles.content,
+            compact ? styles.contentCompact : null,
+            spacious ? styles.contentSpacious : null,
+          ]}
+        >
+          <View style={[styles.textBlock, compact ? styles.textBlockCompact : null]}>
+            <Text
+              numberOfLines={2}
+              style={[
+                styles.title,
+                compact ? styles.titleCompact : null,
+                spacious ? styles.titleSpacious : null,
+              ]}
+            >
               {place.name}
             </Text>
-            <Text numberOfLines={3} style={styles.description}>
+            <Text
+              numberOfLines={compact ? 2 : 3}
+              style={[
+                styles.description,
+                compact ? styles.descriptionCompact : null,
+                spacious ? styles.descriptionSpacious : null,
+              ]}
+            >
               {place.shortReview}
             </Text>
           </View>
 
           {place.tags.length > 0 ? (
-            <View style={styles.tagsRow}>
-              {place.tags.slice(0, 3).map((tag) => (
+            <View style={[styles.tagsRow, compact ? styles.tagsRowCompact : null]}>
+              {place.tags.slice(0, compact ? 2 : 3).map((tag) => (
                 <Tag key={tag} label={formatTagLabel(tag)} />
               ))}
             </View>
           ) : null}
 
-          <Button variant="secondary" onPress={onPressDetails} style={styles.button}>
+          <Button
+            variant="secondary"
+            onPress={onPressDetails}
+            style={[
+              styles.button,
+              compact ? styles.buttonCompact : null,
+              spacious ? styles.buttonSpacious : null,
+            ]}
+          >
             Details
           </Button>
         </View>
@@ -61,6 +99,12 @@ const styles = StyleSheet.create({
     minHeight: 0,
     overflow: 'hidden',
   },
+  frameCompact: {
+    borderRadius: 28,
+  },
+  frameSpacious: {
+    borderRadius: 36,
+  },
   card: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -73,12 +117,26 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(16, 14, 13, 0.34)',
   },
+  overlayCompact: {
+    backgroundColor: 'rgba(16, 14, 13, 0.3)',
+  },
   content: {
     gap: spacing.md,
     padding: spacing.xl,
   },
+  contentCompact: {
+    gap: spacing.sm,
+    padding: spacing.lg,
+  },
+  contentSpacious: {
+    gap: spacing.lg,
+    padding: 28,
+  },
   textBlock: {
     gap: spacing.sm,
+  },
+  textBlockCompact: {
+    gap: spacing.xs,
   },
   title: {
     color: colors.white,
@@ -87,19 +145,45 @@ const styles = StyleSheet.create({
     letterSpacing: -0.8,
     lineHeight: typography.lineHeights.hero,
   },
+  titleCompact: {
+    fontSize: typography.sizes.titleSm,
+    lineHeight: 30,
+  },
+  titleSpacious: {
+    fontSize: 34,
+    lineHeight: 38,
+  },
   description: {
     color: 'rgba(255,255,255,0.94)',
     fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.body,
     lineHeight: typography.lineHeights.body,
   },
+  descriptionCompact: {
+    fontSize: typography.sizes.bodySm,
+    lineHeight: 21,
+  },
+  descriptionSpacious: {
+    fontSize: typography.sizes.body,
+    lineHeight: 25,
+    maxWidth: '90%',
+  },
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
+  tagsRowCompact: {
+    gap: spacing.xs,
+  },
   button: {
     alignSelf: 'flex-start',
     minWidth: 132,
+  },
+  buttonCompact: {
+    minWidth: 116,
+  },
+  buttonSpacious: {
+    minWidth: 144,
   },
 });
