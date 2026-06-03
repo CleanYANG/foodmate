@@ -43,16 +43,16 @@ export function Button({
 const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 999,
     justifyContent: 'center',
     minHeight: 54,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingVertical: 15,
   },
   label: {
     fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.bodySm,
-    letterSpacing: 0.1,
+    letterSpacing: 0.2,
   },
   pressed: {
     transform: [{ scale: 0.985 }],
@@ -61,26 +61,19 @@ const styles = StyleSheet.create({
     opacity: 0.55,
   },
   primary: {
-    backgroundColor: colors.primary,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 3,
+    backgroundColor: colors.text,
   },
   secondary: {
-    backgroundColor: colors.surface,
-    borderColor: colors.borderStrong,
-    borderWidth: 1,
+    backgroundColor: colors.white,
   },
   ghost: {
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.white,
   },
   danger: {
-    backgroundColor: colors.dangerSoft,
+    backgroundColor: colors.white,
   },
   primaryLabel: {
-    color: colors.white,
+    color: colors.primaryText,
   },
   secondaryLabel: {
     color: colors.text,

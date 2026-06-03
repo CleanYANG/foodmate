@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { discoveryRailItems, type DiscoveryFilterId } from '../config/discoveryRail';
+import { useLanguage } from '../store/LanguageContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -22,6 +23,8 @@ export function CategoryRail({
   onPressSavedForLater,
   onPressMyMoment,
 }: CategoryRailProps) {
+  const { t } = useLanguage();
+
   return (
     <View style={[styles.shell, maxWidth ? { maxWidth } : null]}>
       <ScrollView
@@ -38,7 +41,7 @@ export function CategoryRail({
           return (
             <Pressable
               key={item.id}
-              accessibilityLabel={item.label}
+              accessibilityLabel={t(item.translationKey)}
               accessibilityRole="button"
               onPress={() => onSelect(item.id)}
               style={[
@@ -49,7 +52,7 @@ export function CategoryRail({
             >
               <Text style={styles.icon}>{item.icon}</Text>
               <Text style={[styles.label, selected ? styles.labelSelected : null]}>
-                {item.label}
+                {t(item.translationKey)}
               </Text>
             </Pressable>
           );
@@ -58,23 +61,23 @@ export function CategoryRail({
         <View style={styles.utilityDivider} />
 
         <Pressable
-          accessibilityLabel="Saved for later"
+          accessibilityLabel={t('nav.saved')}
           accessibilityRole="button"
           onPress={onPressSavedForLater}
           style={[styles.item, compact ? styles.itemCompact : styles.itemRegular]}
         >
           <Text style={styles.icon}>⭐</Text>
-          <Text style={styles.label}>Saved</Text>
+          <Text style={styles.label}>{t('nav.saved')}</Text>
         </Pressable>
 
         <Pressable
-          accessibilityLabel="My Moment"
+          accessibilityLabel={t('nav.me')}
           accessibilityRole="button"
           onPress={onPressMyMoment}
           style={[styles.item, compact ? styles.itemCompact : styles.itemRegular]}
         >
           <Text style={styles.icon}>📝</Text>
-          <Text style={styles.label}>My Moment</Text>
+          <Text style={styles.label}>{t('nav.me')}</Text>
         </Pressable>
       </ScrollView>
     </View>
@@ -85,13 +88,7 @@ const styles = StyleSheet.create({
   shell: {
     alignSelf: 'center',
     backgroundColor: colors.surface,
-    borderColor: colors.border,
     borderRadius: 24,
-    borderWidth: 1,
-    shadowColor: '#2C221B',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.04,
-    shadowRadius: 18,
     width: '100%',
   },
   content: {
@@ -109,7 +106,7 @@ const styles = StyleSheet.create({
   },
   item: {
     alignItems: 'center',
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.white,
     borderRadius: 999,
     flexDirection: 'row',
   },
@@ -126,7 +123,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   itemSelected: {
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.tagBg,
   },
   icon: {
     fontSize: 18,

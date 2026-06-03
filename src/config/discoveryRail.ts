@@ -4,17 +4,27 @@ export type DiscoveryFilterId = Extract<PlaceCategory, 'restaurant' | 'cafe' | '
 
 export type DiscoveryRailItem = {
   id: DiscoveryFilterId;
-  label: string;
   icon: string;
+  translationKey: 'category.restaurant' | 'category.bar' | 'category.coffee' | 'category.streetFood';
 };
 
 export const discoveryRailItems: DiscoveryRailItem[] = [
-  { id: 'restaurant', label: 'Restaurant', icon: '🍽️' },
-  { id: 'bar', label: 'Bar', icon: '🍸' },
-  { id: 'cafe', label: 'Cafe', icon: '☕' },
-  { id: 'on_mars', label: 'On Mars', icon: '🚀' },
+  { id: 'bar', icon: '◌', translationKey: 'category.bar' },
+  { id: 'restaurant', icon: '⌂', translationKey: 'category.restaurant' },
+  { id: 'cafe', icon: '◔', translationKey: 'category.coffee' },
+  { id: 'on_mars', icon: '△', translationKey: 'category.streetFood' },
 ];
 
-export function formatCategoryLabel(category: PlaceCategory) {
-  return discoveryRailItems.find((item) => item.id === category)?.label ?? category;
+export function getCategoryTranslationKey(category: PlaceCategory) {
+  return (
+    discoveryRailItems.find((item) => item.id === category)?.translationKey ??
+    'category.restaurant'
+  );
+}
+
+export function formatCategoryLabel(
+  category: PlaceCategory,
+  t: (key: DiscoveryRailItem['translationKey']) => string,
+) {
+  return t(getCategoryTranslationKey(category));
 }

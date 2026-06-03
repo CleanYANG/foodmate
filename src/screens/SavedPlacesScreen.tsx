@@ -3,18 +3,21 @@ import { Image, type ImageSourcePropType, ScrollView, StyleSheet, Text, View } f
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { formatCategoryLabel } from '../config/discoveryRail';
+import { BottomTabBar } from '../components/BottomTabBar';
 import { Button } from '../components/Button';
-import { InlineNotice } from '../components/InlineNotice';
 import { Card } from '../components/Card';
+import { InlineNotice } from '../components/InlineNotice';
 import { Screen } from '../components/Screen';
-import { ScreenHeader } from '../components/ScreenHeader';
 import { SkeletonBlock } from '../components/SkeletonBlock';
 import { StateCard } from '../components/StateCard';
 import { Tag } from '../components/Tag';
+import { TasteAvatar } from '../components/TasteAvatar';
+import { normalizePlaceCoverImage } from '../lib/placeCoverImage';
 import { formatTagLabel } from '../lib/placeTags';
 import type { RootStackParamList } from '../navigation/types';
 import { fetchPlaces } from '../services/placeService';
 import { useAuth } from '../store/AuthContext';
+import { useLanguage } from '../store/LanguageContext';
 import { useSavedPlaces } from '../store/SavedPlacesContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
@@ -27,15 +30,16 @@ function getImageSource(imageUrl: Place['imageUrl']): ImageSourcePropType {
   return typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl;
 }
 
-function toErrorMessage(error: unknown) {
+function toErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error) {
     return error.message;
   }
 
-  return 'Something went wrong while loading places.';
+  return fallback;
 }
 
 export function SavedPlacesScreen({ navigation }: Props) {
+  const { t } = useLanguage();
   const { isAuthenticated } = useAuth();
   const [places, setPlaces] = useState<Place[]>([]);
   const [isLoadingPlaces, setIsLoadingPlaces] = useState(true);
@@ -51,7 +55,7 @@ export function SavedPlacesScreen({ navigation }: Props) {
     try {
       setPlaces(await fetchPlaces());
     } catch (error) {
-      setPlacesError(toErrorMessage(error));
+      setPlacesError(toErrorMessage(error, t('common.error')));
     } finally {
       setIsLoadingPlaces(false);
     }
@@ -74,26 +78,36 @@ export function SavedPlacesScreen({ navigation }: Props) {
     () => places.filter((place) => savedPlaceIds.includes(place.id)),
     [places, savedPlaceIds],
   );
+  const leftColumnPlaces = savedPlaces.filter((_, index) => index % 2 === 0);
+  const rightColumnPlaces = savedPlaces.filter((_, index) => index % 2 === 1);
+
+  const handleRemove = (place: Place) =>
+    void removePlace(place.id)
+      .then(() => {
+        setSaveFeedbackMessage(t('saved.removed_feedback', { name: place.name }));
+        return refreshSavedPlaces();
+      })
+      .catch(() => {
+        // Prompting/error state is handled upstream.
+      });
 
   if (!isAuthenticated) {
     return (
-      <Screen>
-        <View style={styles.content}>
-          <ScreenHeader
-            eyebrow="Saved"
-            title="Sign in to keep your places"
-            description="Guests can browse the full CityTalk deck, but saved places only unlock after a quick magic-link sign-in."
-          />
+      <Screen padded={false}>
+        <View style={styles.screen}>
+          <View style={styles.decorBlobOne} pointerEvents="none" />
+          <View style={styles.decorBlobTwo} pointerEvents="none" />
 
-          <Card>
-            <Text style={styles.emptyTitle}>Guest browsing is on</Text>
-            <Text style={styles.emptyText}>
-              Once you sign in, anything you save will appear here automatically.
-            </Text>
-            <Button variant="primary" onPress={() => navigation.navigate('SignIn')}>
-              Sign in with email
-            </Button>
-          </Card>
+          <View style={styles.content}>
+            <Card style={styles.guestCard}>
+              <Text style={styles.emptyTitle}>{t('nav.sign_in')}</Text>
+              <Button variant="primary" onPress={() => navigation.navigate('SignIn')}>
+                {t('saved.sign_in')}
+              </Button>
+            </Card>
+          </View>
+
+          <BottomTabBar currentTab="SavedPlaces" />
         </View>
       </Screen>
     );
@@ -101,107 +115,227 @@ export function SavedPlacesScreen({ navigation }: Props) {
 
   return (
     <Screen padded={false}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.headerWrap}>
-          <ScreenHeader
-            eyebrow="Saved"
-            title="Your collected places"
-            description="Saved places are synced through Supabase for your signed-in account."
-          />
-        </View>
+      <View style={styles.screen}>
+        <View style={styles.decorBlobOne} pointerEvents="none" />
+        <View style={styles.decorBlobTwo} pointerEvents="none" />
 
-        {saveFeedbackMessage ? <InlineNotice message={saveFeedbackMessage} tone="success" /> : null}
-        {errorMessage ? <InlineNotice message={errorMessage} tone="error" /> : null}
+        <ScrollView contentContainerStyle={styles.content}>
+          <View style={styles.headerWrap}>
+            <ScreenHeader
+              eyebrow={t('saved.eyebrow')}
+              title={t('saved.title')}
+              description={t('saved.description')}
+            />
+          </View>
 
-        {placesError ? (
-          <StateCard
-            title="Could not load saved place details"
-            description={placesError}
-            actionLabel="Retry"
-            onAction={() => void loadPlaces()}
-          />
-        ) : null}
+          {saveFeedbackMessage ? <InlineNotice message={saveFeedbackMessage} tone="success" /> : null}
+          {errorMessage ? <InlineNotice message={errorMessage} tone="error" /> : null}
 
-        {isLoading || isLoadingPlaces ? (
-          <Card>
-            <Text style={styles.emptyTitle}>Loading saved places</Text>
-            <Text style={styles.emptyText}>Syncing your saved list and place details.</Text>
-            <SkeletonBlock style={styles.loadingImage} />
-            <SkeletonBlock style={styles.skeletonTitle} />
-            <SkeletonBlock style={styles.skeletonBodyLine} />
-            <View style={styles.tagsRow}>
-              <SkeletonBlock style={styles.skeletonChip} />
-              <SkeletonBlock style={styles.skeletonChipWide} />
+          {placesError ? (
+            <StateCard
+              title={t('saved.error_title')}
+              description={placesError}
+              actionLabel={t('common.retry')}
+              onAction={() => void loadPlaces()}
+            />
+          ) : null}
+
+          {isLoading || isLoadingPlaces ? (
+            <Card>
+              <Text style={styles.emptyTitle}>{t('saved.loading_title')}</Text>
+              <Text style={styles.emptyText}>{t('saved.loading_body')}</Text>
+              <SkeletonBlock style={styles.loadingImage} />
+              <SkeletonBlock style={styles.skeletonTitle} />
+              <SkeletonBlock style={styles.skeletonBodyLine} />
+              <View style={styles.tagsRow}>
+                <SkeletonBlock style={styles.skeletonChip} />
+                <SkeletonBlock style={styles.skeletonChipWide} />
+              </View>
+            </Card>
+          ) : null}
+
+          {!isLoading && !isLoadingPlaces && savedPlaces.length === 0 ? (
+            <StateCard
+              title={t('saved.empty_title')}
+              description={t('saved.empty_body')}
+              actionLabel={t('tabs.discover')}
+              onAction={() => navigation.navigate('Home')}
+            />
+          ) : null}
+
+          {!isLoading && !isLoadingPlaces && savedPlaces.length > 0 ? (
+            <View style={styles.masonryGrid}>
+              <View style={styles.masonryColumn}>
+                {leftColumnPlaces.map((place, index) => (
+                  <Card
+                    key={place.id}
+                    style={[styles.placeCard, index % 2 === 0 ? styles.tallCard : styles.shortCard]}
+                  >
+                    <View style={styles.placeImageFrame}>
+                      <Image
+                        source={getImageSource(place.imageUrl)}
+                        style={[
+                          styles.placeImage,
+                          {
+                            transform: [
+                              { translateX: normalizePlaceCoverImage(place.coverImage).offsetX * 0.45 },
+                              { translateY: normalizePlaceCoverImage(place.coverImage).offsetY * 0.45 },
+                              { scale: normalizePlaceCoverImage(place.coverImage).scale },
+                            ],
+                          },
+                        ]}
+                      />
+                    </View>
+                    <View style={styles.imageBadgeRow}>
+                      <Tag label={formatCategoryLabel(place.category, t)} tone="primary" />
+                      <Text style={styles.imageBadgeHeart}>♥</Text>
+                    </View>
+
+                    <View style={styles.placeBody}>
+                      <View style={styles.recommenderRow}>
+                        <TasteAvatar avatarId={place.recommender.avatar} size={24} />
+                        <Text style={styles.recommenderLine}>
+                          {place.postMode === 'invite'
+                            ? t('detail.inviting')
+                            : t('saved.recommends', { name: place.recommender.name })}
+                        </Text>
+                      </View>
+                      <Text style={styles.placeTitle}>{place.name}</Text>
+                      <Text numberOfLines={3} style={styles.placeReview}>
+                        “{place.recommender.quote}”
+                      </Text>
+                      {place.tags.length > 0 ? (
+                        <View style={styles.tagsRow}>
+                          {place.tags.slice(0, 2).map((tag) => (
+                            <Tag key={tag} label={formatTagLabel(tag)} />
+                          ))}
+                        </View>
+                      ) : null}
+                    </View>
+
+                    <View style={styles.actionsRow}>
+                      <Button
+                        variant="secondary"
+                        style={styles.flexButton}
+                        onPress={() => navigation.navigate('PlaceDetail', { placeId: place.id })}
+                      >
+                        {t('saved.open')}
+                      </Button>
+                      <Button variant="danger" style={styles.flexButton} onPress={() => handleRemove(place)}>
+                        {t('saved.remove')}
+                      </Button>
+                    </View>
+                  </Card>
+                ))}
+              </View>
+
+              <View style={styles.masonryColumn}>
+                {rightColumnPlaces.map((place, index) => (
+                  <Card
+                    key={place.id}
+                    style={[styles.placeCard, index % 2 === 0 ? styles.shortCard : styles.tallCard]}
+                  >
+                    <View style={styles.placeImageFrame}>
+                      <Image
+                        source={getImageSource(place.imageUrl)}
+                        style={[
+                          styles.placeImage,
+                          {
+                            transform: [
+                              { translateX: normalizePlaceCoverImage(place.coverImage).offsetX * 0.45 },
+                              { translateY: normalizePlaceCoverImage(place.coverImage).offsetY * 0.45 },
+                              { scale: normalizePlaceCoverImage(place.coverImage).scale },
+                            ],
+                          },
+                        ]}
+                      />
+                    </View>
+                    <View style={styles.imageBadgeRow}>
+                      <Tag label={formatCategoryLabel(place.category, t)} tone="primary" />
+                      <Text style={styles.imageBadgeHeart}>♥</Text>
+                    </View>
+
+                    <View style={styles.placeBody}>
+                      <View style={styles.recommenderRow}>
+                        <TasteAvatar avatarId={place.recommender.avatar} size={24} />
+                        <Text style={styles.recommenderLine}>
+                          {place.postMode === 'invite'
+                            ? t('detail.inviting')
+                            : t('saved.recommends', { name: place.recommender.name })}
+                        </Text>
+                      </View>
+                      <Text style={styles.placeTitle}>{place.name}</Text>
+                      <Text numberOfLines={3} style={styles.placeReview}>
+                        “{place.recommender.quote}”
+                      </Text>
+                      {place.tags.length > 0 ? (
+                        <View style={styles.tagsRow}>
+                          {place.tags.slice(0, 2).map((tag) => (
+                            <Tag key={tag} label={formatTagLabel(tag)} />
+                          ))}
+                        </View>
+                      ) : null}
+                    </View>
+
+                    <View style={styles.actionsRow}>
+                      <Button
+                        variant="secondary"
+                        style={styles.flexButton}
+                        onPress={() => navigation.navigate('PlaceDetail', { placeId: place.id })}
+                      >
+                        {t('saved.open')}
+                      </Button>
+                      <Button variant="danger" style={styles.flexButton} onPress={() => handleRemove(place)}>
+                        {t('saved.remove')}
+                      </Button>
+                    </View>
+                  </Card>
+                ))}
+              </View>
             </View>
-          </Card>
-        ) : null}
+          ) : null}
+        </ScrollView>
 
-        {!isLoading && !isLoadingPlaces && savedPlaces.length === 0 ? (
-          <StateCard
-            title="Nothing saved yet"
-            description="Swipe right on the Home screen to keep places here for later."
-            actionLabel="Browse places"
-            onAction={() => navigation.navigate('Home')}
-          />
-        ) : null}
-
-        {savedPlaces.map((place) => (
-          <Card key={place.id} style={styles.placeCard}>
-            <Image source={getImageSource(place.imageUrl)} style={styles.placeImage} />
-
-            <View style={styles.placeBody}>
-              <Tag label={formatCategoryLabel(place.category)} tone="primary" />
-              <Text style={styles.placeTitle}>{place.name}</Text>
-              <Text style={styles.placeReview}>{place.shortReview}</Text>
-              {place.tags.length > 0 ? (
-                <View style={styles.tagsRow}>
-                  {place.tags.map((tag) => (
-                    <Tag key={tag} label={formatTagLabel(tag)} />
-                  ))}
-                </View>
-              ) : null}
-            </View>
-
-            <View style={styles.actionsRow}>
-              <Button
-                variant="secondary"
-                style={styles.flexButton}
-                onPress={() => navigation.navigate('PlaceDetail', { placeId: place.id })}
-              >
-                Open details
-              </Button>
-              <Button
-                variant="danger"
-                style={styles.flexButton}
-                onPress={() =>
-                  void removePlace(place.id)
-                    .then(() => {
-                      setSaveFeedbackMessage(`${place.name} removed from saved places.`);
-                      return refreshSavedPlaces();
-                    })
-                    .catch(() => {
-                      // Prompting/error state is handled upstream.
-                    })
-                }
-              >
-                Remove
-              </Button>
-            </View>
-          </Card>
-        ))}
-      </ScrollView>
+        <BottomTabBar currentTab="SavedPlaces" />
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    backgroundColor: colors.background,
+    flex: 1,
+  },
+  decorBlobOne: {
+    backgroundColor: 'transparent',
+    borderRadius: 120,
+    height: 140,
+    left: -50,
+    position: 'absolute',
+    top: 80,
+    width: 140,
+  },
+  decorBlobTwo: {
+    backgroundColor: 'transparent',
+    borderRadius: 140,
+    height: 160,
+    position: 'absolute',
+    right: -60,
+    top: 220,
+    width: 160,
+  },
   content: {
     gap: spacing.lg,
-    padding: spacing.md,
-    paddingBottom: spacing.xxl,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl + spacing.lg,
   },
   headerWrap: {
     paddingTop: spacing.sm,
+  },
+  guestCard: {
+    alignItems: 'stretch',
+    marginTop: spacing.sm,
   },
   emptyTitle: {
     color: colors.text,
@@ -214,9 +348,24 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.body,
     lineHeight: typography.lineHeights.body,
   },
-  placeCard: {
-    padding: spacing.md,
+  masonryGrid: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
     gap: spacing.md,
+  },
+  masonryColumn: {
+    flex: 1,
+    gap: spacing.md,
+  },
+  placeCard: {
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  tallCard: {
+    minHeight: 370,
+  },
+  shortCard: {
+    minHeight: 324,
   },
   loadingImage: {
     borderRadius: 18,
@@ -224,12 +373,43 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   placeImage: {
-    borderRadius: 22,
-    height: 228,
+    height: 188,
     width: '100%',
+  },
+  placeImageFrame: {
+    borderRadius: 22,
+    height: 188,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  imageBadgeRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: -6,
+  },
+  imageBadgeHeart: {
+    backgroundColor: colors.white,
+    borderRadius: 999,
+    color: colors.text,
+    fontSize: 14,
+    overflow: 'hidden',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   placeBody: {
     gap: spacing.sm,
+  },
+  recommenderRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  recommenderLine: {
+    color: colors.accent,
+    fontFamily: typography.fonts.medium,
+    fontSize: 12,
+    letterSpacing: 0.2,
   },
   skeletonTitle: {
     height: 28,
@@ -250,26 +430,27 @@ const styles = StyleSheet.create({
   placeTitle: {
     color: colors.text,
     fontFamily: typography.fonts.semibold,
-    fontSize: typography.sizes.titleSm,
-    lineHeight: 30,
-    letterSpacing: -0.3,
+    fontSize: 22,
+    letterSpacing: -0.4,
+    lineHeight: 28,
   },
   placeReview: {
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontFamily: typography.fonts.regular,
-    fontSize: typography.sizes.bodySm,
-    lineHeight: typography.lineHeights.body,
+    fontSize: 14,
+    lineHeight: 22,
   },
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   flexButton: {
     flex: 1,
+    minHeight: 46,
   },
 });

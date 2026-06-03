@@ -18,6 +18,7 @@ import {
 } from '../services/authService';
 import { env } from '../config/env';
 import { supabase } from '../lib/supabase';
+import { useLanguage } from './LanguageContext';
 
 type AuthContextValue = {
   user: User | null;
@@ -32,15 +33,16 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-function toErrorMessage(error: unknown) {
+function toErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error) {
     return error.message;
   }
 
-  return 'Something went wrong with authentication.';
+  return fallback;
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
+  const { t } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -84,7 +86,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
           return;
         }
 
-        setAuthError(toErrorMessage(error));
+        setAuthError(toErrorMessage(error, t('common.error')));
       } finally {
         if (isMounted) {
           setIsInitializing(false);
@@ -101,7 +103,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     const linkingSubscription = Linking.addEventListener('url', ({ url }) => {
       void maybeHandleAuthCallback(url).catch((error) => {
-        setAuthError(toErrorMessage(error));
+        setAuthError(toErrorMessage(error, t('common.error')));
       });
     });
 
@@ -110,7 +112,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       authSubscription.data.subscription.unsubscribe();
       linkingSubscription.remove();
     };
-  }, []);
+  }, [t]);
 
   const handleSendMagicLink = useCallback(async (email: string) => {
     setAuthError(null);

@@ -1,27 +1,30 @@
-import { StyleSheet, Text, View } from 'react-native';
-
-import { colors } from '../theme/colors';
-import { typography } from '../theme/typography';
+import { Image, StyleSheet, View } from 'react-native';
 
 export function SplashScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>CityTalk</Text>
+      <Image
+        source={require('../../assets/splash-option1-review.png')}
+        resizeMode="contain"
+        style={styles.splashImage}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    backgroundColor: colors.text,
+    backgroundColor: '#FAF4E8',
     flex: 1,
+    alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 32,
   },
-  logo: {
-    color: colors.white,
-    fontFamily: typography.fonts.semibold,
-    fontSize: typography.sizes.titleLg,
-    letterSpacing: 0.8,
+  splashImage: {
+    width: '100%',
+    maxWidth: 420,
+    height: '100%',
+    maxHeight: 760,
   },
 });

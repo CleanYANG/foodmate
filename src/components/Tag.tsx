@@ -52,34 +52,31 @@ const styles = StyleSheet.create({
   base: {
     alignSelf: 'flex-start',
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 0,
     paddingHorizontal: 12,
-    paddingVertical: spacing.xs + 1,
+    paddingVertical: spacing.xs + 2,
   },
   primary: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.primarySoft,
+    backgroundColor: colors.white,
   },
   neutral: {
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.tagBg,
   },
   selected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.tagBg,
   },
   label: {
     fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.caption,
-    letterSpacing: 0.15,
+    letterSpacing: 0.1,
   },
   primaryLabel: {
-    color: colors.primary,
+    color: colors.text,
   },
   neutralLabel: {
-    color: colors.textMuted,
+    color: colors.tagText,
   },
   selectedLabel: {
-    color: colors.white,
+    color: colors.text,
   },
 });

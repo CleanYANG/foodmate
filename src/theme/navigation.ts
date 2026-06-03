@@ -10,6 +10,6 @@ export const navigationTheme = {
     card: colors.surface,
     text: colors.text,
     border: colors.border,
-    primary: colors.primary,
+    primary: colors.accent,
   },
 };

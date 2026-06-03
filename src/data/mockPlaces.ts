@@ -1,11 +1,18 @@
 import type { ImageSourcePropType } from 'react-native';
 
-import cafe1 from '../../assets/cafe_1.jpeg';
-import cafe2 from '../../assets/cafe_2.jpeg';
-import cafe3 from '../../assets/cafe_3.jpeg';
-import cafe4 from '../../assets/cafe_4.jpeg';
-import restaurant1 from '../../assets/restaurant_1.jpeg';
-import restaurant2 from '../../assets/restaurant_2.jpeg';
+import type { PlaceRecommender } from '../types/place';
+
+import cafe1 from '../../assets/cafe/札幌 -allee cafe.jpg';
+import cafe2 from '../../assets/cafe/札幌-Shizukuya.jpg';
+import cafe3 from '../../assets/cafe/札幌-aile cafe.jpg';
+import cafe4 from '../../assets/cafe/札幌-cafe-Noymond.jpg';
+import cafe5 from '../../assets/cafe/札幌-patisserie Cafe feve-1.jpg';
+import cafe6 from '../../assets/cafe/札幌-patisserie Cafe feve-2.jpg';
+import restaurant1 from '../../assets/cafe/札幌-patisserie Cafe feve-3.jpeg';
+import restaurant2 from '../../assets/cafe/札幌-trattoria KUJIRA sapporo-1.jpg';
+import restaurant3 from '../../assets/cafe/札幌-aile cafe.jpg';
+import restaurant4 from '../../assets/cafe/札幌-trattoria KUJIRA sapporo-2.jpg';
+import restaurant5 from '../../assets/cafe/札幌-一粒の麦.jpg';
 
 export type PlaceCategory = 'restaurant' | 'cafe' | 'bar' | 'on_mars';
 
@@ -14,43 +21,129 @@ export type MockPlace = {
   name: string;
   shortReview: string;
   fullDescription: string;
+  story: string;
   address: string;
   latitude: number;
   longitude: number;
   imageUrl: string | ImageSourcePropType;
+  imageUrls: Array<string | ImageSourcePropType>;
   tags: string[];
   category: PlaceCategory;
+  recommender: PlaceRecommender;
+  budget: string | null;
+  bestFor: string[];
 };
 
-const cafeImages = [cafe1, cafe2, cafe3, cafe4] as const;
-const restaurantImages = [restaurant1, restaurant2] as const;
+const recommenderPool: PlaceRecommender[] = [
+  {
+    name: 'Yuki',
+    avatar: null,
+    shortBio: '喜欢安静咖啡馆和下雪天散步',
+    intent: '想找一个也喜欢慢咖啡的人',
+    quote: '下雪天坐窗边真的很舒服，想找人一起去。',
+  },
+  {
+    name: 'Mina',
+    avatar: null,
+    shortBio: '偏爱小店、热汤和慢慢聊天',
+    intent: '最近想认识愿意一起认真吃饭的人',
+    quote: '如果你也喜欢边吃边聊天，这家会很适合第一次见面。',
+  },
+  {
+    name: 'Ren',
+    avatar: null,
+    shortBio: '会为了夜宵和一杯酒专门绕路',
+    intent: '想找下班后可以随时约饭的人',
+    quote: '不会太正式，点几样一起吃就很自然。',
+  },
+  {
+    name: 'Aki',
+    avatar: null,
+    shortBio: '喜欢街边小吃和临时起意的散步',
+    intent: '想认识也愿意边走边吃的人',
+    quote: '不是打卡感，是那种路过就会想一起停下来吃的地方。',
+  },
+];
+
+function buildBudget(category: PlaceCategory) {
+  if (category === 'bar') {
+    return '¥1500-3000';
+  }
+
+  if (category === 'restaurant') {
+    return '¥1000-2500';
+  }
+
+  if (category === 'on_mars') {
+    return '¥500-1200';
+  }
+
+  return '¥800-1500';
+}
+
+function buildBestFor(category: PlaceCategory, tags: string[]) {
+  const defaults =
+    category === 'bar'
+      ? ['下班小酌', '第一次见面', '慢慢聊天']
+      : category === 'restaurant'
+        ? ['认真吃饭', '第一次见面', '分享食物']
+        : category === 'on_mars'
+          ? ['边走边吃', '轻松约一下', '随手加一站']
+          : ['安静聊天', '慢一点坐着', '一个人也舒服'];
+
+  return [...defaults, ...tags.slice(0, 1)];
+}
+
+function buildStory(placeName: string, review: string, description: string, recommender: PlaceRecommender) {
+  return `${placeName} 是我最近很想再约人一起去的一家。${review} ${description} 如果你也会因为食物和氛围想认识一个人，我们可以先从这里开始。`;
+}
+
+const coffeeOptionImages = [
+  cafe1,
+  cafe2,
+  cafe3,
+  cafe4,
+  cafe5,
+  cafe6,
+  restaurant1,
+  restaurant2,
+  restaurant3,
+  restaurant4,
+  restaurant5,
+] as const;
 
 const cafePlaceIds = ['place-001', 'place-006', 'place-008', 'place-013', 'place-015', 'place-020'];
-const restaurantPlaceIds = ['place-004', 'place-005', 'place-011', 'place-012', 'place-018'];
 
 const cafeImageByPlaceId: Partial<Record<string, string | ImageSourcePropType>> =
   cafePlaceIds.reduce(
     (accumulator, placeId, index) => {
-      accumulator[placeId] = cafeImages[index % cafeImages.length];
-      return accumulator;
-    },
-    {} as Partial<Record<string, string | ImageSourcePropType>>,
-  );
-
-const restaurantImageByPlaceId: Partial<Record<string, string | ImageSourcePropType>> =
-  restaurantPlaceIds.reduce(
-    (accumulator, placeId, index) => {
-      accumulator[placeId] = restaurantImages[index % restaurantImages.length];
+      accumulator[placeId] = coffeeOptionImages[index % coffeeOptionImages.length];
       return accumulator;
     },
     {} as Partial<Record<string, string | ImageSourcePropType>>,
   );
 
 function getMockImage(placeId: string, fallbackUrl: string) {
-  return cafeImageByPlaceId[placeId] ?? restaurantImageByPlaceId[placeId] ?? fallbackUrl;
+  return cafeImageByPlaceId[placeId] ?? fallbackUrl;
 }
 
-export const mockPlaces: MockPlace[] = [
+function buildMockGallery(primaryImage: string | ImageSourcePropType, seed: number) {
+  const gallery = [primaryImage];
+
+  for (let index = 0; index < coffeeOptionImages.length && gallery.length < 5; index += 1) {
+    const candidate = coffeeOptionImages[(seed + index) % coffeeOptionImages.length];
+
+    if (!gallery.includes(candidate)) {
+      gallery.push(candidate);
+    }
+  }
+
+  return gallery.slice(0, 5);
+}
+
+const baseMockPlaces: Array<
+  Omit<MockPlace, 'story' | 'recommender' | 'budget' | 'bestFor'>
+> = [
   {
     id: 'place-001',
     name: 'Snow Lantern Coffee',
@@ -95,44 +188,44 @@ export const mockPlaces: MockPlace[] = [
   },
   {
     id: 'place-004',
-    name: 'Miso Corner Shokudo',
+    name: 'Hitotsubu no Mugi',
     shortReview:
-      'Rich ramen, fast service, and exactly the kind of comforting meal you want on a cold day.',
+      'A warm little spot with a gentle, homey mood and the kind of desserts that make you slow down.',
     fullDescription:
-      'Miso Corner Shokudo keeps things straightforward: hearty bowls, deep flavor, and a steady stream of hungry regulars. It is not trying to be precious, which is part of the charm. If you want something dependable, warm, and very Sapporo, this is an easy recommendation.',
+      'Hitotsubu no Mugi feels thoughtful and quietly comforting. The space has a soft, intimate atmosphere, and it works best when you want a calm stop rather than a rushed coffee break. It is easy to picture lingering here with dessert and an unhurried conversation.',
     address: '3-2-14 Kita 5 Johigashi, Chuo-ku, Sapporo',
     latitude: 43.0665,
     longitude: 141.3581,
-    imageUrl: getMockImage('place-004', 'https://placehold.co/800x1200?text=Miso+Corner+Shokudo'),
-    tags: ['ramen', 'comfort food', 'quick meal', 'local classic'],
-    category: 'restaurant',
+    imageUrl: restaurant5,
+    tags: ['desserts', 'quiet', 'cozy', 'gentle atmosphere'],
+    category: 'cafe',
   },
   {
     id: 'place-005',
-    name: 'Moondrop Terrace',
+    name: 'trattoria KUJIRA sapporo',
     shortReview:
-      'A softly lit upper-floor restaurant with city views and a date-night atmosphere that feels easy, not stiff.',
+      'A relaxed trattoria with a friendly tone, generous plates, and a casual date-night feel.',
     fullDescription:
-      'Moondrop Terrace is designed for evenings that are meant to feel a little special. The lighting is flattering, the seating is spaced well, and the mood works whether you are on a first date or just want a slower dinner with someone you like. The view over the city adds just enough drama without overwhelming the meal.',
+      'trattoria KUJIRA sapporo feels polished without becoming formal. The room has a comfortable warmth, and the atmosphere is easy to settle into even on a first visit. It is a good pick when you want somewhere that feels a little special but still very approachable.',
     address: '8-1-5 Minami 2 Jonishi, Chuo-ku, Sapporo',
     latitude: 43.0577,
     longitude: 141.3475,
-    imageUrl: getMockImage('place-005', 'https://placehold.co/800x1200?text=Moondrop+Terrace'),
-    tags: ['romantic', 'city view', 'dinner', 'stylish'],
+    imageUrl: restaurant2,
+    tags: ['trattoria', 'casual dinner', 'stylish', 'easy date spot'],
     category: 'restaurant',
   },
   {
     id: 'place-006',
-    name: 'Maple Lane Bakehouse',
+    name: 'patisserie Cafe feve',
     shortReview:
-      'A tiny bakery-café with buttery pastries and a neighborhood vibe that feels instantly welcoming.',
+      'A charming patisserie café with delicate sweets and a calm, polished atmosphere.',
     fullDescription:
-      'Maple Lane Bakehouse is easy to miss from the street, but that is part of why people remember it. The display case leans seasonal, the coffee is solid, and there is a calm rhythm to the room that makes you want to linger. It is especially good for travelers looking for a softer, more residential side of Sapporo.',
+      'patisserie Cafe feve feels neat, pretty, and quietly inviting. It is the kind of place that works well for an afternoon pause, especially if you want something a little more elegant than a standard coffee stop. The overall mood is soft and easy, with desserts that feel like the main reason to visit.',
     address: '4-6-3 Maruyama Nishi-machi, Chuo-ku, Sapporo',
     latitude: 43.0555,
     longitude: 141.3148,
-    imageUrl: getMockImage('place-006', 'https://placehold.co/800x1200?text=Maple+Lane+Bakehouse'),
-    tags: ['pastries', 'neighborhood', 'morning'],
+    imageUrl: cafe5,
+    tags: ['patisserie', 'desserts', 'calm', 'afternoon cafe'],
     category: 'cafe',
   },
   {
@@ -151,16 +244,16 @@ export const mockPlaces: MockPlace[] = [
   },
   {
     id: 'place-008',
-    name: 'River Snow Espresso',
+    name: 'allee cafe',
     shortReview:
-      'Bright espresso drinks, minimalist design, and a riverside location that feels fresh and modern.',
+      'A cozy café with a relaxed rhythm, warm light, and an easy everyday charm.',
     fullDescription:
-      'River Snow Espresso has a more design-forward mood than many classic coffee spots in the city, but it still feels welcoming. The drinks are clean and balanced, and the seating works for a quick stop or a laptop session. It is a strong pick for people who like modern cafés with a calm visual identity.',
+      'allee cafe feels comfortable in a very natural way. Nothing about it tries too hard, which makes the atmosphere especially pleasant for a slow catch-up or a quiet solo break. It gives off a familiar, lived-in warmth that makes staying longer feel effortless.',
     address: '7-2-18 Nakajima Koen, Chuo-ku, Sapporo',
     latitude: 43.0447,
     longitude: 141.3544,
-    imageUrl: getMockImage('place-008', 'https://placehold.co/800x1200?text=River+Snow+Espresso'),
-    tags: ['modern', 'espresso', 'riverside', 'minimal'],
+    imageUrl: cafe1,
+    tags: ['cozy', 'relaxed', 'warm light', 'slow coffee'],
     category: 'cafe',
   },
   {
@@ -220,15 +313,15 @@ export const mockPlaces: MockPlace[] = [
   },
   {
     id: 'place-013',
-    name: 'Birch Path Tea Room',
-    shortReview: 'A calm tea room with handmade desserts and a wonderfully unhurried pace.',
+    name: 'Shizukuya',
+    shortReview: 'A quiet, understated café with a peaceful mood that feels especially good on slower days.',
     fullDescription:
-      'Birch Path Tea Room feels like it exists slightly outside the tempo of the city. The menu favors classic tea service, the desserts are delicate without being fussy, and the whole place invites you to slow down. It is a strong choice for travelers who want a quieter café-style break.',
+      'Shizukuya has a soft, settled atmosphere that makes it easy to pause for a while. The space feels simple and intentional, with a calmness that stands out from busier coffee shops. It is a nice option when you want something low-key, gentle, and quietly memorable.',
     address: '5-9-7 Minami 3 Jonishi, Chuo-ku, Sapporo',
     latitude: 43.0566,
     longitude: 141.3503,
-    imageUrl: getMockImage('place-013', 'https://placehold.co/800x1200?text=Birch+Path+Tea+Room'),
-    tags: ['tea', 'desserts', 'quiet escape', 'second floor'],
+    imageUrl: cafe2,
+    tags: ['quiet escape', 'minimal', 'peaceful', 'soft atmosphere'],
     category: 'cafe',
   },
   {
@@ -246,16 +339,16 @@ export const mockPlaces: MockPlace[] = [
   },
   {
     id: 'place-015',
-    name: 'Spruce & Stone Café',
+    name: 'aile cafe',
     shortReview:
-      'Warm woods, excellent cheesecake, and a mellow soundtrack that makes staying longer feel reasonable.',
+      'A bright and friendly café with a clean look and an easy, welcoming energy.',
     fullDescription:
-      'Spruce & Stone Café balances comfort and style very well. The desserts are genuinely worth ordering, the seating is comfortable, and the room has that clean but lived-in atmosphere many visitors look for. It works for solo coffee breaks, casual meetings, or a slower afternoon recharge.',
+      'aile cafe feels light, open, and approachable from the moment you walk in. It has a casual comfort that suits both a simple coffee break and a longer conversation. The overall vibe is cheerful without being loud, which makes it an easy place to recommend to almost anyone.',
     address: '12-2-6 Kita 3 Jonishi, Chuo-ku, Sapporo',
     latitude: 43.0637,
     longitude: 141.3391,
-    imageUrl: getMockImage('place-015', 'https://placehold.co/800x1200?text=Spruce+%26+Stone+Cafe'),
-    tags: ['cheesecake', 'design', 'coffee break', 'comfortable'],
+    imageUrl: cafe3,
+    tags: ['bright', 'friendly', 'casual', 'easy conversation'],
     category: 'cafe',
   },
   {
@@ -317,15 +410,30 @@ export const mockPlaces: MockPlace[] = [
   },
   {
     id: 'place-020',
-    name: 'Snowcap Park Espresso',
-    shortReview: 'A relaxed café stop with open skies nearby and a bright, breathable feel.',
+    name: 'cafe Noymond',
+    shortReview: 'A stylish café with a calm edge, good natural light, and a quietly modern atmosphere.',
     fullDescription:
-      'Snowcap Park Espresso offers a more relaxed coffee break than the average city-center café. The nearby open space makes it feel airy, and the pacing is ideal when you want a slower reset before heading onward.',
+      'cafe Noymond has a clean, contemporary feel without turning cold. The room looks thoughtfully put together, but it still feels easy to relax in. It is a strong pick for people who like cafés with a modern visual mood and a softer, more reflective pace.',
     address: '1-17 Moiwa, Minami-ku, Sapporo',
     latitude: 43.0284,
     longitude: 141.3412,
-    imageUrl: getMockImage('place-020', 'https://placehold.co/800x1200?text=Snowcap+Park+Espresso'),
-    tags: ['park', 'coffee', 'family friendly', 'open air'],
+    imageUrl: cafe4,
+    tags: ['modern', 'natural light', 'stylish', 'calm'],
     category: 'cafe',
   },
 ];
+
+export const mockPlaces: MockPlace[] = baseMockPlaces.map((place, index) => {
+  const recommender = recommenderPool[index % recommenderPool.length];
+  const imageUrls = buildMockGallery(place.imageUrl, index);
+
+  return {
+    ...place,
+    imageUrl: imageUrls[0],
+    imageUrls,
+    recommender,
+    story: buildStory(place.name, place.shortReview, place.fullDescription, recommender),
+    budget: buildBudget(place.category),
+    bestFor: buildBestFor(place.category, place.tags),
+  };
+});

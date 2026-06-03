@@ -4,7 +4,8 @@ import * as Linking from 'expo-linking';
 import { supabase } from '../lib/supabase';
 
 function getRedirectUrl() {
-  return Linking.createURL('auth/callback');
+  // Use the explicit app scheme callback registered in Supabase Auth.
+  return 'foomate://auth/callback/';
 }
 
 export class AuthRequiredError extends Error {
@@ -25,7 +26,7 @@ async function ensurePublicUserRow(user: User) {
     return;
   }
 
-  const fallbackName = user.email?.split('@')[0] ?? 'CityTalk User';
+  const fallbackName = user.email?.split('@')[0] ?? 'fooMate User';
 
   const { error: insertError } = await supabase.from('users').insert({
     id: user.id,

@@ -1,4 +1,4 @@
--- CityTalk Supabase MVP schema
+-- fooMate Supabase MVP schema
 -- PostgreSQL / Supabase migration
 
 create extension if not exists pgcrypto;
@@ -34,7 +34,6 @@ create unique index if not exists users_username_idx
 create table if not exists public.places (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  slug text not null unique,
   short_review text,
   full_description text,
   address text,
@@ -43,21 +42,23 @@ create table if not exists public.places (
   image_url text,
   city text,
   country text,
+  category text not null default 'place',
+  tags text[] not null default '{}',
   created_by uuid references public.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint places_name_not_blank check (char_length(trim(name)) > 0),
-  constraint places_slug_not_blank check (char_length(trim(slug)) > 0)
+  constraint places_category_check check (category in ('restaurant', 'cafe', 'bar', 'on_mars', 'place'))
 );
-
-create unique index if not exists places_slug_idx
-  on public.places (slug);
 
 create index if not exists places_city_country_idx
   on public.places (city, country);
 
 create index if not exists places_created_by_idx
   on public.places (created_by);
+
+create index if not exists places_category_idx
+  on public.places (category);
 
 -- REVIEWS
 create table if not exists public.reviews (
@@ -81,39 +82,6 @@ create index if not exists reviews_place_id_idx
 
 create index if not exists reviews_place_created_at_idx
   on public.reviews (place_id, created_at desc);
-
--- Uncomment this if CityTalk should allow only one review per user per place.
--- create unique index if not exists reviews_user_place_unique_idx
---   on public.reviews (user_id, place_id);
-
--- TAGS
-create table if not exists public.tags (
-  id uuid primary key default gen_random_uuid(),
-  name text not null unique,
-  slug text not null unique,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint tags_name_not_blank check (char_length(trim(name)) > 0),
-  constraint tags_slug_not_blank check (char_length(trim(slug)) > 0)
-);
-
-create unique index if not exists tags_name_idx
-  on public.tags (name);
-
-create unique index if not exists tags_slug_idx
-  on public.tags (slug);
-
--- PLACE_TAGS
-create table if not exists public.place_tags (
-  place_id uuid not null references public.places(id) on delete cascade,
-  tag_id uuid not null references public.tags(id) on delete cascade,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  primary key (place_id, tag_id)
-);
-
-create index if not exists place_tags_tag_id_idx
-  on public.place_tags (tag_id);
 
 -- SAVED_PLACES
 create table if not exists public.saved_places (
@@ -143,16 +111,6 @@ before update on public.reviews
 for each row
 execute function public.set_updated_at();
 
-create trigger set_tags_updated_at
-before update on public.tags
-for each row
-execute function public.set_updated_at();
-
-create trigger set_place_tags_updated_at
-before update on public.place_tags
-for each row
-execute function public.set_updated_at();
-
 create trigger set_saved_places_updated_at
 before update on public.saved_places
 for each row
@@ -162,8 +120,6 @@ execute function public.set_updated_at();
 alter table public.users enable row level security;
 alter table public.places enable row level security;
 alter table public.reviews enable row level security;
-alter table public.tags enable row level security;
-alter table public.place_tags enable row level security;
 alter table public.saved_places enable row level security;
 
 -- USERS
@@ -193,19 +149,11 @@ for select
 to anon, authenticated
 using (true);
 
--- TAGS
-create policy "tags_select_public"
-on public.tags
-for select
-to anon, authenticated
-using (true);
-
--- PLACE_TAGS
-create policy "place_tags_select_public"
-on public.place_tags
-for select
-to anon, authenticated
-using (true);
+create policy "places_insert_authenticated_owner"
+on public.places
+for insert
+to authenticated
+with check (auth.uid() = created_by);
 
 -- REVIEWS
 create policy "reviews_select_public"

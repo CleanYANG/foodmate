@@ -1,12 +1,14 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { ChatScreen } from '../screens/ChatScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { MyMomentScreen } from '../screens/MyMomentScreen';
 import { PlaceDetailScreen } from '../screens/PlaceDetailScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SavedPlacesScreen } from '../screens/SavedPlacesScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
 import { SignInScreen } from '../screens/SignInScreen';
-import { useAuth } from '../store/AuthContext';
+import { useLanguage } from '../store/LanguageContext';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import type { RootStackParamList } from './types';
@@ -14,7 +16,7 @@ import type { RootStackParamList } from './types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function AppNavigator() {
-  const { isInitializing, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
 
   return (
     <Stack.Navigator
@@ -22,14 +24,16 @@ export function AppNavigator() {
       screenOptions={{
         animation: 'slide_from_right',
         animationDuration: 220,
+        headerBackButtonDisplayMode: 'minimal',
+        headerTitleAlign: 'center',
         headerStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.background,
         },
         headerShadowVisible: false,
         headerTintColor: colors.text,
         headerTitleStyle: {
           fontFamily: typography.fonts.semibold,
-          fontSize: 17,
+          fontSize: 18,
         },
         contentStyle: {
           backgroundColor: colors.background,
@@ -37,25 +41,23 @@ export function AppNavigator() {
       }}
     >
       <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MyMoment" component={MyMomentScreen} options={{ title: 'My Moment' }} />
+      <Stack.Screen name="MyMoment" component={MyMomentScreen} options={{ title: t('me.title') }} />
       <Stack.Screen
         name="PlaceDetail"
         component={PlaceDetailScreen}
-        options={{ title: 'Place Detail' }}
+        options={{ title: '' }}
       />
-      <Stack.Screen
-        name="SavedPlaces"
-        component={SavedPlacesScreen}
-        options={{ title: isAuthenticated ? 'Saved Places' : 'Saved Places (Sign in to use)' }}
-      />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: t('nav.chat') }} />
+      <Stack.Screen name="SavedPlaces" component={SavedPlacesScreen} options={{ title: t('saved.title') }} />
       <Stack.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          title: isInitializing ? 'Account' : isAuthenticated ? 'Profile' : 'Sign In',
+          title: t('nav.post'),
         }}
       />
-      <Stack.Screen name="SignIn" component={SignInScreen} options={{ title: 'Sign In' }} />
+      <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: t('settings.title') }} />
+      <Stack.Screen name="SignIn" component={SignInScreen} options={{ title: t('nav.sign_in') }} />
     </Stack.Navigator>
   );
 }

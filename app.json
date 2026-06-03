@@ -1,31 +1,45 @@
 {
   "expo": {
-    "name": "CityTalk",
-    "slug": "CityTalk",
-    "scheme": "citytalk",
+    "name": "fooMate",
+    "slug": "foomate",
+    "scheme": "foomate",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.redhong.foomate",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.redhong.foomate",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#FAF4E8",
+        "foregroundImage": "./assets/logo.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/logo.png"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FAF4E8",
+          "image": "./assets/splash-standard.png",
+          "imageWidth": 240
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1ded28c3-1485-4e14-9825-aeac148f51b4"
+      }
     }
   }
 }

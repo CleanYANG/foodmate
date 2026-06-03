@@ -20,42 +20,42 @@ type OnboardingStep = {
 const STEPS: OnboardingStep[] = [
   {
     eyebrow: 'Welcome',
-    title: 'Find city spots fast',
+    title: 'Follow the feeling first',
     description:
-      'CityTalk is built for quick decisions. Browse one place at a time and keep only the ones worth revisiting.',
+      '饭搭子帮你从吃饭心情出发，看到真实的人写下的推荐，然后决定要不要私下聊聊。',
     bullets: [
-      'Swipe left to skip a place that is not for you.',
-      'Swipe right to save a place for later.',
-      'Use tags to filter the feed when you want a certain vibe.',
+      'Swipe left when the vibe misses.',
+      'Swipe right when you want to keep it.',
+      'Use tags to jump into a mood quickly.',
     ],
-    accent: 'Swipe through the city',
-    tags: ['skip left', 'save right', 'quick browse'],
+    accent: 'Discover by vibe',
+    tags: ['cozy', 'artistic', 'local'],
   },
   {
     eyebrow: 'Save what matters',
-    title: 'Build your short list',
+    title: 'Build a visual shortlist',
     description:
-      'When a place catches your eye, save it and jump into the detail page for the full description, address, and reviews.',
+      'When something feels right, keep it. Your saved board turns loose inspiration into a plan you can actually use later.',
     bullets: [
-      'Saved places stay easy to revisit from the Saved tab.',
-      'Open details when a card needs a closer look.',
-      'Reviews help you remember why a place stood out.',
+      'Saved places stay visible in a mood-first board.',
+      'Open details when you want the full story.',
+      'Capture why it stood out before you forget.',
     ],
-    accent: 'Turn swipes into a plan',
-    tags: ['saved places', 'details', 'reviews'],
+    accent: 'Keep what resonates',
+    tags: ['saved board', 'details', 'moments'],
   },
   {
     eyebrow: 'Go there',
-    title: 'Open maps when you are ready',
+    title: 'Turn discovery into a real day out',
     description:
-      'Each place detail view can send you straight to maps, so CityTalk moves cleanly from discovery to actually going outside.',
+      '看到合适的推荐就可以直接收藏、开聊，慢慢把线上变成一次真的约饭。',
     bullets: [
-      'Use Open in maps from the place detail screen.',
-      'Check the address before you head out.',
-      'Skip onboarding anytime — you can start exploring immediately.',
+      'Read the vibe summary before you commit.',
+      'Check the address when you are ready to go.',
+      'Start exploring whenever you want.',
     ],
-    accent: 'From idea to destination',
-    tags: ['open maps', 'address', 'skip anytime'],
+    accent: 'From mood to movement',
+    tags: ['weekend route', 'easy choice', 'go now'],
   },
 ];
 
@@ -75,10 +75,15 @@ export function OnboardingScreen({ completeOnboarding }: OnboardingScreenProps) 
   };
 
   return (
-    <Screen>
+    <Screen padded={false}>
       <View style={styles.container}>
+        <View style={styles.decorBlobOne} pointerEvents="none" />
+        <View style={styles.decorBlobTwo} pointerEvents="none" />
+        <View style={styles.decorBlobThree} pointerEvents="none" />
+
         <View style={styles.headerRow}>
           <View>
+            <Text style={styles.brand}>fooMate</Text>
             <Text style={styles.eyebrow}>{step.eyebrow}</Text>
             <Text style={styles.progress}>{progressLabel}</Text>
           </View>
@@ -88,20 +93,30 @@ export function OnboardingScreen({ completeOnboarding }: OnboardingScreenProps) 
         </View>
 
         <Card style={styles.heroCard}>
-          <View style={styles.heroBadge}>
-            <Text style={styles.heroBadgeText}>{step.accent}</Text>
+          <View style={styles.heroTopRow}>
+            <View style={styles.heroBadge}>
+              <Text style={styles.heroBadgeText}>{step.accent}</Text>
+            </View>
+            <View style={styles.progressDots}>
+              {STEPS.map((_, index) => (
+                <View
+                  key={`step-${index}`}
+                  style={[styles.progressDot, index === stepIndex ? styles.progressDotActive : null]}
+                />
+              ))}
+            </View>
           </View>
           <Text style={styles.title}>{step.title}</Text>
           <Text style={styles.description}>{step.description}</Text>
 
           <View style={styles.tagsRow}>
             {step.tags.map((tag) => (
-              <Tag key={tag} label={tag} />
+              <Tag key={tag} label={tag} tone="primary" />
             ))}
           </View>
         </Card>
 
-        <Card>
+        <Card style={styles.stepsCard}>
           <Text style={styles.sectionTitle}>How it works</Text>
           <View style={styles.bulletList}>
             {step.bullets.map((bullet) => (
@@ -141,75 +156,137 @@ export function OnboardingScreen({ completeOnboarding }: OnboardingScreenProps) 
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: colors.background,
     flex: 1,
     gap: spacing.md,
     justifyContent: 'space-between',
+    padding: spacing.md,
+  },
+  decorBlobOne: {
+    backgroundColor: 'transparent',
+    borderRadius: 150,
+    height: 170,
+    left: -70,
+    position: 'absolute',
+    top: 80,
+    width: 170,
+  },
+  decorBlobTwo: {
+    backgroundColor: 'transparent',
+    borderRadius: 140,
+    height: 150,
+    position: 'absolute',
+    right: -56,
+    top: 190,
+    width: 150,
+  },
+  decorBlobThree: {
+    backgroundColor: 'transparent',
+    borderRadius: 120,
+    bottom: 120,
+    height: 140,
+    position: 'absolute',
+    right: 18,
+    width: 140,
   },
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: spacing.md,
+    paddingTop: spacing.sm,
+  },
+  brand: {
+    color: colors.text,
+    fontFamily: typography.fonts.semibold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    marginBottom: spacing.sm,
   },
   eyebrow: {
     color: colors.primary,
+    fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.eyebrow,
-    fontWeight: typography.weights.bold,
-    letterSpacing: 1.4,
+    letterSpacing: 1,
     textTransform: 'uppercase',
   },
   progress: {
     color: colors.textSoft,
+    fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.bodySm,
-    fontWeight: typography.weights.semibold,
     marginTop: spacing.xs,
   },
   heroCard: {
     backgroundColor: colors.surface,
+    minHeight: 280,
+  },
+  heroTopRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   heroBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.primarySoft,
+    backgroundColor: colors.tagBg,
     borderRadius: 999,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
   heroBadgeText: {
-    color: colors.primary,
+    color: colors.secondary,
+    fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.bodySm,
-    fontWeight: typography.weights.bold,
+  },
+  progressDots: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  progressDot: {
+    backgroundColor: colors.border,
+    borderRadius: 999,
+    height: 7,
+    width: 7,
+  },
+  progressDotActive: {
+    backgroundColor: colors.primary,
+    width: 24,
   },
   title: {
     color: colors.text,
-    fontSize: typography.sizes.titleMd,
-    fontWeight: typography.weights.heavy,
-    lineHeight: typography.lineHeights.title,
+    fontFamily: typography.fonts.semibold,
+    fontSize: typography.sizes.hero,
+    letterSpacing: -0.8,
+    lineHeight: 38,
   },
   description: {
     color: colors.textMuted,
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.body,
-    lineHeight: typography.lineHeights.body,
+    lineHeight: 26,
   },
   sectionTitle: {
     color: colors.text,
+    fontFamily: typography.fonts.semibold,
     fontSize: typography.sizes.titleSm,
-    fontWeight: typography.weights.heavy,
+  },
+  stepsCard: {
+    backgroundColor: 'rgba(255,255,255,0.94)',
   },
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   bulletList: {
     gap: spacing.md,
   },
   bulletRow: {
+    alignItems: 'flex-start',
     flexDirection: 'row',
     gap: spacing.sm,
-    alignItems: 'flex-start',
   },
   bulletDot: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.highlight,
     borderRadius: 999,
     height: 10,
     marginTop: 7,
@@ -218,12 +295,14 @@ const styles = StyleSheet.create({
   bulletText: {
     color: colors.textMuted,
     flex: 1,
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.body,
     lineHeight: typography.lineHeights.body,
   },
   footerRow: {
     flexDirection: 'row',
     gap: spacing.sm,
+    paddingBottom: spacing.sm,
   },
   flexButton: {
     flex: 1,

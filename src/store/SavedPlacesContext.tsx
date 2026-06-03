@@ -11,6 +11,7 @@ import {
 import { Alert } from 'react-native';
 
 import { useAuth } from './AuthContext';
+import { useLanguage } from './LanguageContext';
 import {
   fetchSavedPlaces,
   savePlace as savePlaceInService,
@@ -31,26 +32,27 @@ type SavedPlacesContextValue = {
 
 const SavedPlacesContext = createContext<SavedPlacesContextValue | undefined>(undefined);
 
-function toErrorMessage(error: unknown) {
+function toErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error) {
     return error.message;
   }
 
-  return 'Something went wrong while syncing saved places.';
+  return fallback;
 }
 
 export function SavedPlacesProvider({ children }: PropsWithChildren) {
   const { isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const [savedPlaceIds, setSavedPlaceIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const promptSignIn = useCallback(() => {
     Alert.alert(
-      'Sign in to save places',
-      'Guests can browse freely, but saving places needs a quick magic-link sign-in.',
+      t('auth.prompt_title'),
+      t('auth.prompt_body'),
     );
-  }, []);
+  }, [t]);
 
   const refreshSavedPlaces = useCallback(async () => {
     if (!isAuthenticated) {
@@ -67,11 +69,11 @@ export function SavedPlacesProvider({ children }: PropsWithChildren) {
       const savedPlaces = await fetchSavedPlaces();
       setSavedPlaceIds(savedPlaces.map((savedPlace) => savedPlace.placeId));
     } catch (error) {
-      setErrorMessage(toErrorMessage(error));
+      setErrorMessage(toErrorMessage(error, t('common.error')));
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, t]);
 
   useEffect(() => {
     void refreshSavedPlaces();
@@ -95,11 +97,11 @@ export function SavedPlacesProvider({ children }: PropsWithChildren) {
         await savePlaceInService(placeId);
       } catch (error) {
         setSavedPlaceIds(previousValue);
-        setErrorMessage(toErrorMessage(error));
+        setErrorMessage(toErrorMessage(error, t('common.error')));
         throw error;
       }
     },
-    [isAuthenticated, promptSignIn, savedPlaceIds],
+    [isAuthenticated, promptSignIn, savedPlaceIds, t],
   );
 
   const removePlace = useCallback(
@@ -118,11 +120,11 @@ export function SavedPlacesProvider({ children }: PropsWithChildren) {
         await unsavePlace(placeId);
       } catch (error) {
         setSavedPlaceIds(previousValue);
-        setErrorMessage(toErrorMessage(error));
+        setErrorMessage(toErrorMessage(error, t('common.error')));
         throw error;
       }
     },
-    [isAuthenticated, promptSignIn, savedPlaceIds],
+    [isAuthenticated, promptSignIn, savedPlaceIds, t],
   );
 
   const isSaved = useCallback(

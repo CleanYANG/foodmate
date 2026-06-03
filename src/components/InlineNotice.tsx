@@ -33,20 +33,16 @@ export function InlineNotice({ message, tone = 'info' }: InlineNoticeProps) {
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: colors.surfaceMuted,
-    borderColor: colors.border,
+    backgroundColor: colors.white,
     borderRadius: 16,
-    borderWidth: 1,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
   success: {
-    backgroundColor: colors.secondarySoft,
-    borderColor: colors.secondary,
+    backgroundColor: colors.white,
   },
   error: {
-    backgroundColor: colors.dangerSoft,
-    borderColor: '#F8C7D0',
+    backgroundColor: colors.white,
   },
   text: {
     color: colors.textMuted,
@@ -54,7 +50,7 @@ const styles = StyleSheet.create({
     lineHeight: typography.lineHeights.body,
   },
   successText: {
-    color: '#365B4B',
+    color: colors.mutedOlive,
   },
   errorText: {
     color: colors.danger,

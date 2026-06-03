@@ -12,7 +12,7 @@ export function SkeletonBlock({ style }: SkeletonBlockProps) {
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.tagBg,
     borderRadius: 14,
     overflow: 'hidden',
   },

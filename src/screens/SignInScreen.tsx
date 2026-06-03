@@ -4,10 +4,11 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { InlineNotice } from '../components/InlineNotice';
 import { Screen } from '../components/Screen';
-import { ScreenHeader } from '../components/ScreenHeader';
 import type { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../store/AuthContext';
+import { useLanguage } from '../store/LanguageContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -19,6 +20,7 @@ function normalizeEmail(value: string) {
 }
 
 export function SignInScreen({ navigation }: Props) {
+  const { t } = useLanguage();
   const { sendMagicLink, authError, clearAuthError } = useAuth();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,17 +47,19 @@ export function SignInScreen({ navigation }: Props) {
   };
 
   return (
-    <Screen>
+    <Screen padded={false}>
       <View style={styles.container}>
-        <ScreenHeader
-          eyebrow="Sign in"
-          title="Save places with a magic link"
-          description="Guests can browse freely. Sign in with your email when you want your saved list to stick."
-        />
+        <View style={styles.decorBlobOne} pointerEvents="none" />
+        <View style={styles.decorBlobTwo} pointerEvents="none" />
 
-        <Card>
+        <View style={styles.headerBlock}>
+          <Text style={styles.brand}>fooMate</Text>
+          <Text style={styles.title}>{t('nav.sign_in')}</Text>
+        </View>
+
+        <Card style={styles.signInCard}>
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t('signin.email')}</Text>
             <TextInput
               autoCapitalize="none"
               autoComplete="email"
@@ -69,20 +73,21 @@ export function SignInScreen({ navigation }: Props) {
           </View>
 
           <Button variant="primary" onPress={() => void handleSendLink()}>
-            {isSubmitting ? 'Sending link...' : 'Email me a sign-in link'}
+            {isSubmitting ? t('signin.sending') : t('signin.send')}
           </Button>
 
           {hasSentLink ? (
-            <Text style={styles.successText}>
-              Magic link sent. Open it on this device and CityTalk will sign you in.
-            </Text>
+            <InlineNotice
+              message={t('signin.success')}
+              tone="success"
+            />
           ) : null}
 
-          {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
+          {authError ? <InlineNotice message={authError} tone="error" /> : null}
         </Card>
 
         <Button variant="ghost" onPress={() => navigation.goBack()}>
-          Back
+          {t('common.back')}
         </Button>
       </View>
     </Screen>
@@ -91,36 +96,68 @@ export function SignInScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: colors.background,
     flex: 1,
     gap: spacing.lg,
+    justifyContent: 'space-between',
+    padding: spacing.md,
+  },
+  decorBlobOne: {
+    backgroundColor: 'transparent',
+    borderRadius: 140,
+    height: 160,
+    left: -60,
+    position: 'absolute',
+    top: 90,
+    width: 160,
+  },
+  decorBlobTwo: {
+    backgroundColor: 'transparent',
+    borderRadius: 130,
+    height: 150,
+    position: 'absolute',
+    right: -50,
+    top: 220,
+    width: 150,
+  },
+  headerBlock: {
+    paddingTop: spacing.sm,
+  },
+  brand: {
+    color: colors.text,
+    fontFamily: typography.fonts.semibold,
+    fontSize: 18,
+    letterSpacing: -0.3,
+  },
+  title: {
+    color: colors.text,
+    fontFamily: typography.fonts.semibold,
+    fontSize: typography.sizes.titleLg,
+    letterSpacing: -0.5,
+    lineHeight: 32,
+    marginTop: spacing.sm,
+    maxWidth: 290,
+  },
+  signInCard: {
+    backgroundColor: colors.white,
   },
   fieldGroup: {
     gap: spacing.xs,
   },
   label: {
     color: colors.text,
+    fontFamily: typography.fonts.medium,
     fontSize: typography.sizes.bodySm,
-    fontWeight: typography.weights.bold,
   },
   input: {
-    backgroundColor: colors.surfaceMuted,
-    borderColor: colors.border,
-    borderRadius: 16,
-    borderWidth: 1,
+    backgroundColor: colors.white,
+    borderRadius: 22,
+    borderWidth: 0,
     color: colors.text,
+    fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.body,
     minHeight: 54,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-  },
-  successText: {
-    color: colors.secondary,
-    fontSize: typography.sizes.bodySm,
-    lineHeight: typography.lineHeights.body,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: typography.sizes.bodySm,
-    lineHeight: typography.lineHeights.body,
   },
 });

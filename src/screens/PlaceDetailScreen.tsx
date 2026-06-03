@@ -1,26 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   Image,
   type ImageSourcePropType,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '../components/Button';
 import { InlineNotice } from '../components/InlineNotice';
-import { Screen } from '../components/Screen';
 import { SkeletonBlock } from '../components/SkeletonBlock';
 import { StateCard } from '../components/StateCard';
-import { Tag } from '../components/Tag';
-import { formatTagLabel } from '../lib/placeTags';
+import { TasteAvatar } from '../components/TasteAvatar';
+import { useAppViewport } from '../lib/useAppViewport';
 import type { RootStackParamList } from '../navigation/types';
+import { acceptPlaceInvite, closePlaceInvite, requestPlaceInvite } from '../services/inviteService';
 import { fetchPlaceById } from '../services/placeService';
-import { useMoments } from '../store/MomentsContext';
+import { useAuth } from '../store/AuthContext';
+import { useLanguage } from '../store/LanguageContext';
+import { useSavedPlaces } from '../store/SavedPlacesContext';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -28,64 +29,38 @@ import type { Place } from '../types/place';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PlaceDetail'>;
 
-function toErrorMessage(error: unknown) {
-  if (error instanceof Error) {
+function toErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) {
     return error.message;
   }
 
-  return 'Something went wrong while loading this place.';
+  return fallback;
 }
 
 function getImageSource(imageUrl: Place['imageUrl']): ImageSourcePropType {
   return typeof imageUrl === 'string' ? { uri: imageUrl } : imageUrl;
 }
 
-function formatPrice(place: Place) {
-  if (place.category === 'bar') {
-    return '$$';
-  }
-
-  if (place.category === 'restaurant') {
-    return '$$$';
-  }
-
-  return '$$';
-}
-
-function PlaceDetailInfoRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: string;
-  label: string;
-  value: string;
-}) {
-  return (
-    <View style={styles.infoRow}>
-      <Text style={styles.infoIcon}>{icon}</Text>
-      <View style={styles.infoCopy}>
-        <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={styles.infoValue}>{value}</Text>
-      </View>
-    </View>
-  );
+function formatRecommendedBy(language: 'en' | 'zh', label: string, name: string) {
+  return language === 'zh' ? `${name} ${label}` : `${label} ${name}`;
 }
 
 export function PlaceDetailScreen({ route, navigation }: Props) {
+  const { language, t } = useLanguage();
+  const { user, isAuthenticated } = useAuth();
+  const { width: windowWidth } = useAppViewport();
   const { placeId } = route.params ?? {};
   const [place, setPlace] = useState<Place | null>(null);
-  const [momentText, setMomentText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isSavingMoment, setIsSavingMoment] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const { saveMoment } = useMoments();
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const { savePlace, removePlace, isSaved } = useSavedPlaces();
 
   useEffect(() => {
     const loadPlace = async () => {
       if (!placeId) {
-        setErrorMessage('Missing place id.');
+        setErrorMessage(t('detail.missing_id'));
         setIsLoading(false);
         return;
       }
@@ -97,20 +72,20 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
         const nextPlace = await fetchPlaceById(placeId);
 
         if (!nextPlace) {
-          setErrorMessage('This place could not be found.');
+          setErrorMessage(t('detail.not_found'));
           return;
         }
 
         setPlace(nextPlace);
       } catch (error) {
-        setErrorMessage(toErrorMessage(error));
+        setErrorMessage(toErrorMessage(error, t('common.error')));
       } finally {
         setIsLoading(false);
       }
     };
 
     void loadPlace();
-  }, [placeId]);
+  }, [placeId, t]);
 
   useEffect(() => {
     if (!feedbackMessage) {
@@ -121,247 +96,431 @@ export function PlaceDetailScreen({ route, navigation }: Props) {
     return () => clearTimeout(timeout);
   }, [feedbackMessage]);
 
-  const trimmedMomentText = useMemo(() => momentText.trim(), [momentText]);
+  const saved = useMemo(() => (place ? isSaved(place.id) : false), [isSaved, place]);
 
   if (isLoading) {
     return (
-      <Screen padded={false}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <SkeletonBlock style={styles.heroImage} />
+      <SafeAreaView edges={['bottom']} style={styles.screen}>
+        <ScrollView contentContainerStyle={styles.content} style={styles.scrollView}>
+          <View style={styles.heroShell}>
+            <SkeletonBlock style={styles.heroImage} />
+          </View>
           <View style={styles.body}>
+            <SkeletonBlock style={styles.skeletonLineShort} />
             <SkeletonBlock style={styles.skeletonTitle} />
-            <SkeletonBlock style={styles.skeletonBodyLine} />
-            <View style={styles.tagsRow}>
-              <SkeletonBlock style={styles.skeletonChip} />
-              <SkeletonBlock style={styles.skeletonChipWide} />
-            </View>
-            <View style={styles.infoBlock}>
-              <SkeletonBlock style={styles.skeletonInfoRow} />
-              <SkeletonBlock style={styles.skeletonInfoRow} />
-              <SkeletonBlock style={styles.skeletonInfoRow} />
-            </View>
-            <SkeletonBlock style={styles.skeletonInput} />
+            <SkeletonBlock style={styles.skeletonBodyBlock} />
             <SkeletonBlock style={styles.skeletonButton} />
           </View>
         </ScrollView>
-      </Screen>
+      </SafeAreaView>
     );
   }
 
   if (errorMessage || !place) {
     return (
-      <Screen>
+      <SafeAreaView edges={['bottom']} style={styles.screen}>
         <View style={styles.errorWrap}>
           <StateCard
-            title="Place details are unavailable"
-            description={errorMessage ?? 'This place is unavailable right now.'}
-            actionLabel="Retry"
+            title={t('detail.unavailable_title')}
+            description={errorMessage ?? t('detail.unavailable_body')}
+            actionLabel={t('common.retry')}
             onAction={() => navigation.replace('PlaceDetail', { placeId })}
           />
         </View>
-      </Screen>
+      </SafeAreaView>
     );
   }
 
-  const handleSaveMoment = async () => {
-    if (!trimmedMomentText) {
-      Alert.alert('Your Moment', 'Write a short memory before saving it.');
-      return;
-    }
-
-    setIsSavingMoment(true);
-
+  const handleToggleSave = async () => {
     try {
-      await saveMoment(place, trimmedMomentText);
-      setMomentText('');
-      setFeedbackMessage('Moment saved.');
+      if (saved) {
+        await removePlace(place.id);
+        setFeedbackMessage(t('detail.save_removed'));
+      } else {
+        await savePlace(place.id);
+        setFeedbackMessage(t('detail.save_added'));
+      }
     } catch (error) {
-      setFeedbackMessage(toErrorMessage(error));
-    } finally {
-      setIsSavingMoment(false);
+      setFeedbackMessage(toErrorMessage(error, t('common.error')));
     }
   };
 
+  const handleInviteAction = async () => {
+    if (!place) {
+      return;
+    }
+
+    if (!isAuthenticated || !user?.id) {
+      navigation.navigate('SignIn');
+      return;
+    }
+
+    try {
+      if (place.postMode !== 'invite') {
+        return;
+      }
+
+      const isCreator = place.inviteCreatorUserId === user.id;
+      const isAcceptedRequester = place.inviteAcceptedRequesterUserId === user.id;
+
+      if (place.inviteStatus === 'accepted' && (isCreator || isAcceptedRequester)) {
+        navigation.navigate('Chat', {
+          placeId: place.id,
+          initialMessage: t('chat.prefill', { title: place.name }),
+        });
+        return;
+      }
+
+      if (isCreator && place.inviteStatus === 'requested') {
+        await acceptPlaceInvite(place.id, user.id);
+        setPlace(await fetchPlaceById(place.id));
+        setFeedbackMessage(t('detail.invite_accepted'));
+        return;
+      }
+
+      if (!isCreator && place.inviteStatus === 'idle') {
+        await requestPlaceInvite(place.id, user.id);
+        setPlace(await fetchPlaceById(place.id));
+        setFeedbackMessage(t('detail.invite_requested'));
+      }
+    } catch (error) {
+      setFeedbackMessage(toErrorMessage(error, t('common.error')));
+    }
+  };
+
+  const handleCloseInvite = async () => {
+    if (!place || !user?.id) {
+      return;
+    }
+
+    try {
+      await closePlaceInvite(place.id, user.id);
+      setPlace(await fetchPlaceById(place.id));
+      setFeedbackMessage(t('detail.invite_closed'));
+    } catch (error) {
+      setFeedbackMessage(toErrorMessage(error, t('common.error')));
+    }
+  };
+
+  const recommendedByLine = formatRecommendedBy(
+    language,
+    t('detail.recommendedBy'),
+    place.recommender.name,
+  );
+  const story = place.story || place.fullDescription || place.shortReview;
+  const galleryImages = place.imageUrls.slice(0, 5);
+  const heroWidth = Math.max(windowWidth - spacing.md * 2, 0);
+  const currentUserId = user?.id ?? null;
+  const isCreator = place.inviteCreatorUserId != null && place.inviteCreatorUserId === currentUserId;
+  const isRequester =
+    place.inviteRequesterUserId != null && place.inviteRequesterUserId === currentUserId;
+  const isAcceptedRequester =
+    place.inviteAcceptedRequesterUserId != null &&
+    place.inviteAcceptedRequesterUserId === currentUserId;
+
+  const primaryAction = (() => {
+    if (place.postMode !== 'invite') {
+      return null;
+    }
+
+    if (place.inviteStatus === 'accepted') {
+      if (isCreator || isAcceptedRequester) {
+        return {
+          label: t('detail.chat_ready'),
+          onPress: () => void handleInviteAction(),
+          disabled: false,
+        };
+      }
+
+      return {
+        label: t('detail.inviting'),
+        onPress: () => undefined,
+        disabled: true,
+      };
+    }
+
+    if (place.inviteStatus === 'requested') {
+      if (isCreator) {
+        return {
+          label: t('detail.accept_invite'),
+          onPress: () => void handleInviteAction(),
+          disabled: false,
+        };
+      }
+
+      if (isRequester) {
+        return {
+          label: t('detail.request_pending'),
+          onPress: () => undefined,
+          disabled: true,
+        };
+      }
+    }
+
+    return {
+      label: t('detail.inviting'),
+      onPress: () => void handleInviteAction(),
+      disabled: false,
+    };
+  })();
+
+  const secondaryInviteAction = (() => {
+    if (place.postMode !== 'invite' || !isCreator) {
+      return null;
+    }
+
+    return {
+      label: t('detail.close_invite'),
+      onPress: () => void handleCloseInvite(),
+    };
+  })();
+
   return (
-    <Screen padded={false}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Image source={getImageSource(place.imageUrl)} style={styles.heroImage} />
-        <View style={styles.heroImageOverlay} />
-
-        <View style={styles.body}>
-          <View style={styles.textBlock}>
-            <Text style={styles.placeTitle}>{place.name}</Text>
-            <Text style={styles.placeReview}>{place.shortReview}</Text>
-          </View>
-
-          {place.tags.length > 0 ? (
-            <View style={styles.tagsRow}>
-              {place.tags.slice(0, 3).map((tag) => (
-                <Tag key={tag} label={formatTagLabel(tag)} />
+    <SafeAreaView edges={['bottom']} style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.content} style={styles.scrollView}>
+        <View style={styles.heroShell}>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(event) => {
+              const nextIndex = Math.round(event.nativeEvent.contentOffset.x / heroWidth);
+              setActiveImageIndex(Math.min(Math.max(nextIndex, 0), galleryImages.length - 1));
+            }}
+          >
+            {galleryImages.map((imageUrl, index) => (
+              <Image
+                key={`${place.id}-image-${index}`}
+                source={getImageSource(imageUrl)}
+                style={[styles.heroImage, { width: heroWidth }]}
+              />
+            ))}
+          </ScrollView>
+          {galleryImages.length > 1 ? (
+            <View style={styles.pagination}>
+              {galleryImages.map((_, index) => (
+                <View
+                  key={`${place.id}-dot-${index}`}
+                  style={[
+                    styles.paginationDot,
+                    index === activeImageIndex ? styles.paginationDotActive : null,
+                  ]}
+                />
               ))}
             </View>
           ) : null}
+        </View>
 
-          <View style={styles.infoBlock}>
-            <PlaceDetailInfoRow icon="📍" label="Location" value={place.address} />
-            <PlaceDetailInfoRow icon="🕒" label="Hours" value="Hours coming soon" />
-            <PlaceDetailInfoRow icon="💰" label="Price" value={formatPrice(place)} />
+        <View style={styles.body}>
+          <View style={styles.identityBlock}>
+            <View style={styles.recommenderRow}>
+              <TasteAvatar avatarId={place.recommender.avatar} size={28} />
+              <Text style={styles.recommenderLine}>{recommendedByLine}</Text>
+            </View>
+            <Text style={styles.placeTitle}>{place.name}</Text>
+            {place.postMode === 'invite' ? (
+              <Text style={styles.inviteLabel}>{t('detail.inviting')}</Text>
+            ) : null}
           </View>
 
-          <View style={styles.momentBlock}>
-            <Text style={styles.sectionTitle}>Your Moment</Text>
-            <TextInput
-              multiline
-              onChangeText={setMomentText}
-              placeholder="What did this place feel like?"
-              placeholderTextColor={colors.textSoft}
-              style={styles.momentInput}
-              textAlignVertical="top"
-              value={momentText}
-            />
-          </View>
+          <Text style={styles.storyText}>{story}</Text>
+
+          {place.tags.length > 0 || place.address || place.budget ? (
+            <View style={styles.metaWrap}>
+              {place.tags.slice(0, 3).map((tag) => (
+                <View key={tag} style={styles.metaChip}>
+                  <Text style={styles.metaChipText}>{tag}</Text>
+                </View>
+              ))}
+              {place.address ? (
+                <Text numberOfLines={1} style={styles.metaText}>
+                  {place.address}
+                </Text>
+              ) : null}
+              {place.budget ? <Text style={styles.metaText}>{place.budget}</Text> : null}
+            </View>
+          ) : null}
 
           {feedbackMessage ? <InlineNotice message={feedbackMessage} tone="success" /> : null}
-
-          <Button disabled={isSavingMoment} onPress={() => void handleSaveMoment()}>
-            {isSavingMoment ? 'Saving...' : 'Save Moment'}
-          </Button>
         </View>
       </ScrollView>
-    </Screen>
+
+      <View style={styles.stickyBar}>
+        {primaryAction ? (
+          <Button
+            disabled={primaryAction.disabled}
+            style={styles.stickyPrimary}
+            onPress={primaryAction.onPress}
+          >
+            {primaryAction.label}
+          </Button>
+        ) : null}
+        {secondaryInviteAction ? (
+          <Button variant="secondary" style={styles.stickySecondary} onPress={secondaryInviteAction.onPress}>
+            {secondaryInviteAction.label}
+          </Button>
+        ) : null}
+        <Button
+          variant="secondary"
+          style={[
+            styles.stickySave,
+            !primaryAction && !secondaryInviteAction ? styles.stickySaveFull : null,
+          ]}
+          onPress={() => void handleToggleSave()}
+        >
+          {saved ? t('detail.saved') : t('detail.save')}
+        </Button>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    backgroundColor: colors.background,
+    flex: 1,
+  },
+  scrollView: {
+    backgroundColor: colors.background,
+  },
   content: {
-    paddingBottom: spacing.xxl,
+    paddingBottom: 124,
+  },
+  heroShell: {
+    borderRadius: 34,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    overflow: 'hidden',
+    position: 'relative',
   },
   heroImage: {
-    height: 420,
-    width: '100%',
+    height: 430,
   },
-  heroImageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(20, 16, 13, 0.1)',
-    bottom: undefined,
-    height: 420,
+  pagination: {
+    alignItems: 'center',
+    bottom: spacing.md,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
   },
-  body: {
-    gap: spacing.lg,
-    marginTop: -16,
-    padding: spacing.md,
+  paginationDot: {
+    backgroundColor: 'rgba(250, 244, 232, 0.45)',
+    borderRadius: 999,
+    height: 8,
+    width: 8,
+  },
+  paginationDotActive: {
+    backgroundColor: '#FAF4E8',
+    width: 20,
   },
   errorWrap: {
     flex: 1,
     justifyContent: 'center',
   },
-  textBlock: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 28,
-    borderWidth: 1,
-    gap: spacing.sm,
-    padding: spacing.lg,
+  body: {
+    gap: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
   },
   placeTitle: {
     color: colors.text,
     fontFamily: typography.fonts.semibold,
     fontSize: typography.sizes.titleLg,
-    letterSpacing: -0.8,
     lineHeight: typography.lineHeights.hero,
   },
-  placeReview: {
-    color: colors.textMuted,
-    fontFamily: typography.fonts.regular,
-    fontSize: typography.sizes.body,
-    lineHeight: typography.lineHeights.body,
+  identityBlock: {
+    gap: 6,
   },
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  infoBlock: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 28,
-    borderWidth: 1,
-    gap: spacing.md,
-    padding: spacing.lg,
-  },
-  infoRow: {
+  recommenderRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: spacing.md,
+    gap: spacing.xs,
   },
-  infoIcon: {
-    fontSize: 20,
-    width: 24,
+  recommenderLine: {
+    color: colors.textSecondary,
+    fontFamily: typography.fonts.medium,
+    fontSize: typography.sizes.bodySm,
   },
-  infoCopy: {
-    flex: 1,
-    gap: 2,
+  inviteLabel: {
+    color: colors.accent,
+    fontFamily: typography.fonts.medium,
+    fontSize: typography.sizes.caption,
   },
-  infoLabel: {
-    color: colors.textSoft,
+  storyText: {
+    color: colors.text,
+    fontFamily: typography.fonts.regular,
+    fontSize: typography.sizes.body,
+    lineHeight: 31,
+  },
+  metaWrap: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  metaChip: {
+    backgroundColor: colors.tagBg,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  metaChipText: {
+    color: colors.tagText,
+    fontFamily: typography.fonts.medium,
+    fontSize: typography.sizes.caption,
+  },
+  metaText: {
+    color: colors.textMuted,
     fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.caption,
   },
-  infoValue: {
-    color: colors.text,
-    fontFamily: typography.fonts.medium,
-    fontSize: typography.sizes.bodySm,
-    lineHeight: typography.lineHeights.compact,
-  },
-  momentBlock: {
-    gap: spacing.sm,
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontFamily: typography.fonts.semibold,
-    fontSize: typography.sizes.titleSm,
-    letterSpacing: -0.3,
-  },
-  momentInput: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 24,
-    borderWidth: 1,
-    color: colors.text,
-    fontFamily: typography.fonts.regular,
-    fontSize: typography.sizes.body,
-    lineHeight: typography.lineHeights.body,
-    minHeight: 148,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  skeletonChip: {
-    height: 32,
-    width: 86,
-  },
-  skeletonChipWide: {
-    height: 32,
-    width: 132,
+  skeletonLineShort: {
+    height: 18,
+    width: '36%',
   },
   skeletonTitle: {
-    height: 34,
-    width: '72%',
+    height: 32,
+    width: '64%',
   },
-  skeletonBodyLine: {
-    height: 18,
-    width: '100%',
-  },
-  skeletonInfoRow: {
-    height: 42,
-    width: '100%',
-  },
-  skeletonInput: {
-    borderRadius: 24,
-    height: 148,
+  skeletonBodyBlock: {
+    borderRadius: 28,
+    height: 180,
     width: '100%',
   },
   skeletonButton: {
     height: 54,
     width: '100%',
+  },
+  stickyBar: {
+    backgroundColor: colors.surface,
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+    bottom: 0,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    left: 0,
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    position: 'absolute',
+    right: 0,
+  },
+  stickyPrimary: {
+    flex: 1.35,
+    minHeight: 48,
+  },
+  stickySave: {
+    flex: 0.95,
+    minHeight: 48,
+  },
+  stickySecondary: {
+    flex: 1,
+    minHeight: 48,
+  },
+  stickySaveFull: {
+    flex: 1,
   },
 });

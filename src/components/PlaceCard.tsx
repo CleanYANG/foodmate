@@ -1,8 +1,9 @@
-import { ImageBackground, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from './Button';
 import { Tag } from './Tag';
 import { formatTagLabel } from '../lib/placeTags';
+import { useAppViewport } from '../lib/useAppViewport';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -18,7 +19,7 @@ function getImageSource(imageUrl: Place['imageUrl']) {
 }
 
 export function PlaceCard({ place, onPressDetails }: PlaceCardProps) {
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth } = useAppViewport();
   const compact = windowWidth < 768;
   const spacious = windowWidth >= 1280;
 
@@ -35,7 +36,6 @@ export function PlaceCard({ place, onPressDetails }: PlaceCardProps) {
         style={styles.card}
         imageStyle={styles.image}
       >
-        <View style={[styles.overlay, compact ? styles.overlayCompact : null]} />
         <View
           style={[
             styles.content,
@@ -83,7 +83,7 @@ export function PlaceCard({ place, onPressDetails }: PlaceCardProps) {
               spacious ? styles.buttonSpacious : null,
             ]}
           >
-            Details
+            View
           </Button>
         </View>
       </ImageBackground>
@@ -108,25 +108,22 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     justifyContent: 'flex-end',
+    padding: spacing.sm,
   },
   image: {
-    borderRadius: 32,
+    borderRadius: 24,
     resizeMode: 'cover',
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(16, 14, 13, 0.34)',
-  },
-  overlayCompact: {
-    backgroundColor: 'rgba(16, 14, 13, 0.3)',
-  },
   content: {
+    backgroundColor: colors.surface,
+    borderRadius: 22,
     gap: spacing.md,
-    padding: spacing.xl,
+    marginTop: spacing.sm,
+    padding: spacing.lg,
   },
   contentCompact: {
     gap: spacing.sm,
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   contentSpacious: {
     gap: spacing.lg,
@@ -139,7 +136,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   title: {
-    color: colors.white,
+    color: colors.text,
     fontFamily: typography.fonts.semibold,
     fontSize: typography.sizes.titleLg,
     letterSpacing: -0.8,
@@ -154,7 +151,7 @@ const styles = StyleSheet.create({
     lineHeight: 38,
   },
   description: {
-    color: 'rgba(255,255,255,0.94)',
+    color: colors.textMuted,
     fontFamily: typography.fonts.regular,
     fontSize: typography.sizes.body,
     lineHeight: typography.lineHeights.body,
