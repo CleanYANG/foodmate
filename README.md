@@ -1,4 +1,4 @@
-# CityTalk
+# foodmate
 
 CityTalk is a lightweight travel discovery app for browsing places one card at a time.
 
